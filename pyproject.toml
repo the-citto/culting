@@ -45,9 +45,9 @@ package-dir = {"" = "python"}
 culting = ["py.typed"]
 
 [tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
-optional-dependencies.tests = { file = ["requirements-tests.txt"]}
-optional-dependencies.dev = { file = ["requirements-dev.txt"]}
+dependencies = { file = ["requirements/requirements.txt"] }
+optional-dependencies.tests = { file = ["requirements/requirements-tests.txt"]}
+optional-dependencies.dev = { file = ["requirements/requirements-dev.txt"]}
 
 [tool.setuptools.packages.find]
 where = ["python"]
