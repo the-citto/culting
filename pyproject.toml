@@ -4,8 +4,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "freight"
-description = "Freight package manager."
+name = "culting"
+description = "Culting package manager."
 version = "0.1.0"
 requires-python = ">=3.12"
 
@@ -29,12 +29,12 @@ classifiers = [
 dynamic = ["dependencies", "optional-dependencies"]
 
 [project.urls]
-# Homepage = "https://github.com/the-citto/freight"
-# Documentation = "https://github.com/the-citto/freight"
-Repository = "https://github.com/the-citto/freight"
+# Homepage = "https://github.com/the-citto/culting"
+# Documentation = "https://github.com/the-citto/culting"
+Repository = "https://github.com/the-citto/culting"
 
 [project.scripts]
-freight = "freight:__main__.main"
+culting = "culting:__main__.main"
 
 
 
@@ -42,7 +42,7 @@ freight = "freight:__main__.main"
 package-dir = {"" = "python"}
 
 [tool.setuptools.package-data]
-freight = ["py.typed"]
+culting = ["py.typed"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
@@ -125,7 +125,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["freight"]
+known-first-party = ["culting"]
 lines-after-imports = 3
 
 
