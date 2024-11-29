@@ -1,4 +1,6 @@
 # Culting
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 
 > ## [cargo culting](https://en.wiktionary.org/wiki/cargo_culting)
 > ### Etymology
