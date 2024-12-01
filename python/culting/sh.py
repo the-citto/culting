@@ -11,5 +11,3 @@ class Git:
         """Init."""
         self.bin = shutil.which("git")
 
-
-
