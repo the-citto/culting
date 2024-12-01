@@ -1,6 +1,7 @@
 # Culting
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-
+[![image](https://img.shields.io/pypi/v/culting.svg)](https://pypi.python.org/pypi/culting)
+[![image](https://img.shields.io/pypi/l/culting.svg)](https://pypi.python.org/pypi/culting)
+[![image](https://img.shields.io/pypi/pyversions/culting.svg)](https://pypi.python.org/pypi/culting)
 
 > ## [cargo culting](https://en.wiktionary.org/wiki/cargo_culting)
 > ### Etymology
