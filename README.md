@@ -25,12 +25,12 @@
 `git` [🔗](https://git-scm.com/)
 
 `pyenv` [🔗](https://github.com/pyenv/pyenv)
-> `✅ TODO` for Windows, evaluate
-> 
-> `py` launcher [🔗](https://docs.python.org/3/using/windows.html#launcher), with `py.ini` [🔗](https://peps.python.org/pep-0397/#configuration-file)
-> 
-> `pyenv-win` [🔗](https://github.com/pyenv-win/pyenv-win)
-> 
+> `✅ TODO`
+>
+> for Windows,
+> evaluate `py` launcher [🔗](https://docs.python.org/3/using/windows.html#launcher),
+> with `py.ini` [🔗](https://peps.python.org/pep-0397/#configuration-file), 
+> `pyenv-win` [🔗](https://github.com/pyenv-win/pyenv-win), 
 > or both
 
 `.python-version` [🔗](https://github.com/pyenv/pyenv?tab=readme-ov-file#understanding-python-version-selection)
@@ -45,9 +45,7 @@
 > `✅ TODO` add options to split settings from `pyproject.toml`
 >
 > ex.
->
-> `ruff.toml` / `.ruff.toml` [🔗](https://docs.astral.sh/ruff/configuration/)
->
+> `ruff.toml` / `.ruff.toml` [🔗](https://docs.astral.sh/ruff/configuration/), 
 > `mypy.ini` / `.mypy.ini` [🔗](https://mypy.readthedocs.io/en/stable/config_file.html)
 
 `setuptools` [🔗](https://setuptools.pypa.io/en/latest/)
@@ -62,5 +60,12 @@
 
 `pytest` [🔗](https://docs.pytest.org/en/stable/)
 
+>`✅ TODO`
+>
+> `tox` [🔗](https://tox.wiki/)
+
+>`✅ TODO`
+>
+> `podman` [🔗](https://podman.io/) / `docker` [🔗](https://www.docker.com/) project setup
 
 
