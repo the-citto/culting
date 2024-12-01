@@ -12,5 +12,9 @@ mdurl==0.1.2
     # via markdown-it-py
 pygments==2.18.0
     # via rich
+python-dotenv==1.0.1
+    # via -r requirements/requirements.in
 rich==13.9.4
+    # via -r requirements/requirements.in
+tomlkit==0.13.2
     # via -r requirements/requirements.in
