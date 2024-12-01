@@ -3,6 +3,7 @@
 import pathlib
 import shutil
 import subprocess
+import sys
 
 import click
 
@@ -24,9 +25,11 @@ Specify Git binary path if not present in $PATH.
 Use this also when working in WSL and need to use Windows' git.exe.
 """
 @cli.command()
-@click.option("--git-path", type=str, default="git", help=git_path_help)
+@click.option("--git-path", type=str, help=git_path_help)
 def init(git_path: str) -> None:
     """Init project."""
+    if git_path is None and sys.platform == "linux":
+        git_path = "git"
     try:
         init_git_msg = init_git(git_path)
         if init_git_msg is not None:
