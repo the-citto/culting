@@ -1,4 +1,5 @@
 click
+pygit2
 python-dotenv
 rich
 tomlkit

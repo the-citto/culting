@@ -40,7 +40,9 @@ certifi==2024.8.30
     #   httpx
     #   requests
 cffi==1.17.1
-    # via argon2-cffi-bindings
+    # via
+    #   -c /home/alex/Development/python/culting/requirements/requirements.txt
+    #   argon2-cffi-bindings
 charset-normalizer==3.4.0
     # via requests
 comm==0.2.2
@@ -211,7 +213,9 @@ ptyprocess==0.7.0
 pure-eval==0.2.3
     # via stack-data
 pycparser==2.22
-    # via cffi
+    # via
+    #   -c /home/alex/Development/python/culting/requirements/requirements.txt
+    #   cffi
 pydantic==2.10.2
     # via
     #   -r /home/alex/Development/python/culting/requirements/requirements-tests.txt

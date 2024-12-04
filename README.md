@@ -35,7 +35,7 @@
 
 ## 🛠️ Python Toolchain
 
-`git` [🔗](https://git-scm.com/)
+`git` [🔗](https://git-scm.com/) / [🔗](https://www.pygit2.org/)
 
 `pyenv` [🔗](https://github.com/pyenv/pyenv)
 > `✅ TODO`
@@ -80,5 +80,16 @@
 >`✅ TODO`
 >
 > `podman` [🔗](https://podman.io/) / `docker` [🔗](https://www.docker.com/) project setup
+
+>`✅ TODO`
+>
+> `GitHub CLI` / `gh` [🔗](https://cli.github.com/manual/)
+
+>`✅ TODO`
+>
+> GitHub workflows management [🔗](https://docs.github.com/en/actions/writing-workflows)
+
+
+
 
 
