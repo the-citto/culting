@@ -35,7 +35,7 @@
 
 ## 🛠️ Python Toolchain
 
-`git` [🔗](https://git-scm.com/) / [🔗](https://www.pygit2.org/)
+`git` [🔗](https://git-scm.com/) / `libgit2` `pygit2` [🔗](https://github.com/libgit2/pygit2)
 
 `pyenv` [🔗](https://github.com/pyenv/pyenv)
 > `✅ TODO`
