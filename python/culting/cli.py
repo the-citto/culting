@@ -1,11 +1,9 @@
 """CLI."""
 
-# import abc
-# import os
-# import pathlib
-# import shutil
-# import subprocess
-# import typing as t
+import os
+import shutil
+import subprocess
+import typing as t
 
 import click
 import pygit2
@@ -39,7 +37,8 @@ def cli() -> None:
 @click.argument("project-path", type=click.Path())
 def init(project_path: str) -> None:
     """Init project."""
-    pygit2.init_repository(path=project_path)
+    # pygit2.init_repository(path=project_path)
+    Pyenv()
     # if git_path is None and sys.platform == "linux":
     #     git_path = "git"
     # try:
@@ -58,9 +57,51 @@ def init(project_path: str) -> None:
     #     click.echo(f": {warn}")
     #     click.echo(warn.output)
 
-# repo = pygit2.Repository(".")
 
-# for r in repo.references: print(r)
+
+
+class Command:
+    """Command."""
+
+    binary: os.PathLike | str
+
+    def _verify_command(self) -> None:
+        binary_path = shutil.which(self.binary)
+        print(binary_path)
+        if binary_path is None:
+            err_msg = f"'{self.binary}' not found."
+            raise CommandNotFoundError(err_msg)
+
+    def _run_command(self, *, command_args: t.Iterable[str] = ()) -> str:
+        process_command = [str(self.binary), *command_args]
+        process = subprocess.Popen(
+            process_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = process.communicate()
+        if stderr:
+            err_msg = stderr.decode("utf-8")
+            raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(process_command), output=err_msg)
+        return stdout.decode("utf-8")
+
+
+class Pyenv(Command):
+    """Pyenv."""
+
+    binary = "pyenv"
+
+    def __init__(self) -> None:
+        """Init."""
+        self._verify_command()
+        command_args = ["versions"]
+        print(self._run_command(command_args=command_args))
+
+
+    # def init_project(self) -> str:
+    #     """Init."""
+    #     return ""
+
 
 
 # class Command(abc.ABC):
@@ -96,8 +137,11 @@ def init(project_path: str) -> None:
 #     @abc.abstractmethod
 #     def init(self) -> str:
 #         """Run command for project init."""
-#
-#
+
+
+
+
+
 # class Git(Command):
 #     """Git."""
 #
@@ -112,33 +156,6 @@ def init(project_path: str) -> None:
 #             raise InitWarning(warn_msg, output=stdout)
 #         return self._run_command(command_args=command_args)
 
-
-
-# git = Git(binary="foo")
-# git = Git()
-# git.init()
-# Git("/usr/bin/git").init()
-
-
-
-
-
-
-# def init_git(bin_path: str) -> str | None:
-#     """Init Git."""
-#     if pathlib.Path(".git").is_dir():
-#         return None
-#     _bin_path = shutil.which(bin_path)
-#     if _bin_path is None:
-#         err_msg = f"'{bin_path}' not found."
-#         raise CommandNotFoundError(err_msg)
-#     command = [_bin_path, "init"]
-#     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#     stdout, stderr = process.communicate()
-#     if stderr:
-#         err_msg = stderr.decode("utf-8")
-#         raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(command), output=err_msg)
-#     return stdout.decode("utf-8")
 
 
 
