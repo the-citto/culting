@@ -67,7 +67,6 @@ class Command:
 
     def _verify_command(self) -> None:
         binary_path = shutil.which(self.binary)
-        print(binary_path)
         if binary_path is None:
             err_msg = f"'{self.binary}' not found."
             raise CommandNotFoundError(err_msg)
