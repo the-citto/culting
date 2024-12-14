@@ -1,4 +1,4 @@
-# 🏗️ Culting
+# 🏗️ Culting, a Python projects' manager
 [github_release]: https://img.shields.io/github/release/the-citto/culting.svg?logo=github&logoColor=white&color=orange
 [pypi_version]: https://img.shields.io/pypi/v/culting.svg?logo=python&logoColor=white
 [python_versions]: https://img.shields.io/pypi/pyversions/culting.svg?logo=python&logoColor=white
@@ -37,17 +37,58 @@
 
 `git` [🔗](https://git-scm.com/) / `libgit2` `pygit2` [🔗](https://github.com/libgit2/pygit2)
 
-`uv` [🔗](https://docs.astral.sh/uv/)
+#
+`venv`
 
+> `✅ TODO`
+>
+> evaluate using `virtualenv`
 
-`py.typed` [🔗](https://peps.python.org/pep-0561/#packaging-type-information)
+#
+
+`pip` [🔗](https://pip.pypa.io/)
+
+`venv` [🔗](https://docs.python.org/3/library/venv.html)
+
+`setuptools` [🔗](https://setuptools.pypa.io/en/latest/)
+
+`pip-tools` [🔗](https://pip-tools.readthedocs.io/) based on `requirements*.in` files
+
+`pyenv` [🔗](https://github.com/pyenv/pyenv) (`Posix`) / 
+`py` launcher [🔗](https://docs.python.org/3/using/windows.html#launcher) (`Windows`)
+
+> `✅ TODO` 
+>
+> follow `uv`'s development [🔗](https://docs.astral.sh/uv/)
+>
+> cross-platform capabilites much of interest
+
+#
+
+`.python-version` [🔗](https://github.com/pyenv/pyenv?tab=readme-ov-file#understanding-python-version-selection)
+(viable for both `pyenv` and `uv`, needs attention for the `py` launcher)
+
+#
+
+`requirements` files 
+
+> `✅ TODO` 
+>
+> follow [PEP 751](https://peps.python.org/pep-0751/) for developments about `python.lock` file - if ever
+
+#
 
 `pyproject.toml` [🔗](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/)
-> `✅ TODO` options to split settings from `pyproject.toml`
+
+> `✅ TODO`
+>
+>options to split settings from `pyproject.toml`
 >
 > ex.
 > `ruff.toml` / `.ruff.toml` [🔗](https://docs.astral.sh/ruff/configuration/), 
 > `mypy.ini` / `.mypy.ini` [🔗](https://mypy.readthedocs.io/en/stable/config_file.html)
+
+#
 
 `pyright` [🔗](https://microsoft.github.io/pyright/)
 
@@ -56,6 +97,10 @@
 `ruff` [🔗](https://docs.astral.sh/ruff/)
 
 `pytest` [🔗](https://docs.pytest.org/en/stable/)
+
+`py.typed` [🔗](https://peps.python.org/pep-0561/#packaging-type-information)
+
+#
 
 >`✅ TODO`
 >
@@ -68,29 +113,13 @@
 >`✅ TODO`
 >
 > `GitHub CLI` / `gh` [🔗](https://cli.github.com/manual/)
-
->`✅ TODO`
 >
 > GitHub workflows management [🔗](https://docs.github.com/en/actions/writing-workflows)
 
-### My old toolchain
-replacing the following (currently used with `make` [here](https://github.com/the-citto/pyproject-base)) with `uv`
 
-`pip` [🔗](https://pip.pypa.io/)
 
-`venv` [🔗](https://docs.python.org/3/library/venv.html)
 
-`setuptools` [🔗](https://setuptools.pypa.io/en/latest/)
 
-`pip-tools` [🔗](https://pip-tools.readthedocs.io/) based on `requirements*.in` files
-
-`requirements` files possibly soon superseeded by a `python.lock` [file](https://discuss.python.org/t/uv-another-rust-tool-written-to-replace-pip/46039/67)?
-
-`pyenv` [🔗](https://github.com/pyenv/pyenv)
-
-`py` launcher [🔗](https://docs.python.org/3/using/windows.html#launcher), (for Windows)
-
-`.python-version` [🔗](https://github.com/pyenv/pyenv?tab=readme-ov-file#understanding-python-version-selection)
 
 
 
