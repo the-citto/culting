@@ -6,8 +6,6 @@
 #
 annotated-types==0.7.0
     # via pydantic
-cffi==1.17.1
-    # via pygit2
 click==8.1.7
     # via
     #   -r requirements/requirements.in
@@ -22,18 +20,12 @@ markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
-pycparser==2.22
-    # via cffi
 pydantic[email]==2.10.3
     # via -r requirements/requirements.in
 pydantic-core==2.27.1
     # via pydantic
-pygit2==1.16.0
-    # via -r requirements/requirements.in
 pygments==2.18.0
     # via rich
-python-dotenv==1.0.1
-    # via -r requirements/requirements.in
 rich==13.9.4
     # via rich-click
 rich-click==1.8.5

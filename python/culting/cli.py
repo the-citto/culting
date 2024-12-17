@@ -43,9 +43,9 @@ If not specified the system default will be used.
 @click.pass_context
 def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
     """Init project."""
-    from .init import ProjInit
+    from .init import Init
     try:
-        ProjInit(**kwargs)
+        Init(**kwargs)
     except InitError as err:
         logger.error(err)
         ctx.abort()

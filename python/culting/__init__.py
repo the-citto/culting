@@ -7,6 +7,7 @@ Refs:
 """
 
 from ._exceptions import (
+    CommandNotFoundError,
     InitError,
 )
 from ._logger import (
@@ -19,8 +20,8 @@ from ._typing import (
 from ._vars import (
     __os__,
     __version__,
-    xdg_config_home,
-    xdg_state_home,
+    __xdg_config_home__,
+    __xdg_state_home__,
 )
 from .defaults import (
     culting_conf,
@@ -29,15 +30,16 @@ from .defaults import (
 
 
 __all__: list[str] = [
+    "CommandNotFoundError",
     "InitError",
     "InitKwargs",
     "PythonVersions",
     "__os__",
     "__version__",
+    "__xdg_config_home__",
+    "__xdg_state_home__",
     "culting_conf",
     "logger",
-    "xdg_config_home",
-    "xdg_state_home",
 ]
 
 

@@ -9,12 +9,12 @@ import typing as t
 import pydantic
 import tomlkit as toml
 
-from . import xdg_config_home
+from . import __xdg_config_home__
 
 
 
-conf_default_path = xdg_config_home / "culting-default.toml"
-conf_custom_path = xdg_config_home / "culting.toml"
+conf_default_path = __xdg_config_home__ / "culting-default.toml"
+conf_custom_path = __xdg_config_home__ / "culting.toml"
 
 
 
