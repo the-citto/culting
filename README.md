@@ -37,6 +37,11 @@
 
 `git` [🔗](https://git-scm.com/) / `libgit2` `pygit2` [🔗](https://github.com/libgit2/pygit2)
 
+> `✅ TODO`
+>
+> `setuptools-scm` [🔗](https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html#dynamic-metadata)
+[🔗](https://github.com/pypa/setuptools-scm) capabilities
+
 #
 `venv`
 

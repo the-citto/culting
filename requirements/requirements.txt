@@ -4,16 +4,30 @@
 #
 #    pip-compile --output-file=requirements/requirements.txt requirements/requirements.in
 #
+annotated-types==0.7.0
+    # via pydantic
 cffi==1.17.1
     # via pygit2
 click==8.1.7
-    # via -r requirements/requirements.in
+    # via
+    #   -r requirements/requirements.in
+    #   rich-click
+dnspython==2.7.0
+    # via email-validator
+email-validator==2.2.0
+    # via pydantic
+idna==3.10
+    # via email-validator
 markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
 pycparser==2.22
     # via cffi
+pydantic[email]==2.10.3
+    # via -r requirements/requirements.in
+pydantic-core==2.27.1
+    # via pydantic
 pygit2==1.16.0
     # via -r requirements/requirements.in
 pygments==2.18.0
@@ -21,6 +35,13 @@ pygments==2.18.0
 python-dotenv==1.0.1
     # via -r requirements/requirements.in
 rich==13.9.4
+    # via rich-click
+rich-click==1.8.5
     # via -r requirements/requirements.in
 tomlkit==0.13.2
     # via -r requirements/requirements.in
+typing-extensions==4.12.2
+    # via
+    #   pydantic
+    #   pydantic-core
+    #   rich-click

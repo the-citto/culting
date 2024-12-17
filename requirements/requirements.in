@@ -1,6 +1,7 @@
 click
+pydantic[email]
 pygit2
 python-dotenv
-rich
+rich-click
 tomlkit
 

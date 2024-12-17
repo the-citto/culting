@@ -54,7 +54,10 @@ where = ["python"]
 
 
 [tool.pytest.ini_options]
-addopts = "--strict-markers --no-header --tb=no --cov --cov-report term-missing"
+addopts = """\
+--strict-markers --no-header --tb=no --cov \
+--cov-report term-missing \
+"""
 testpaths = ["tests"]
 
 
@@ -63,6 +66,7 @@ omit = ["python/tests/*"]
 
 
 [tool.mypy]
+plugins = ['pydantic.mypy']
 strict = true
 python_executable = ".venv/bin/python"
 exclude = [
