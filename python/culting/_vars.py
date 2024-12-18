@@ -3,8 +3,11 @@
 import importlib.metadata
 import pathlib
 import sys
+import typing as t
 
-from ._typing import SupportedOs
+from ._typing import (
+    SupportedOs,
+)
 
 
 
@@ -13,19 +16,19 @@ if __package__ is None:
 
 __version__: str = importlib.metadata.version(__package__)
 
+__os__: SupportedOs = t.cast(SupportedOs, sys.platform)
 
-_os = sys.platform
-if _os == "linux":
+
+if __os__ == "linux":
     _xdg_config_home = ".config"
     _xdg_state_home = ".local/state"
-elif _os == "win32":
+elif __os__ == "win32":
     _xdg_state_home = "AppData"
     _xdg_config_home = "AppData/Temp"
 else:
-    err_msg = f"OS '{_os}'"
+    err_msg = f"OS '{__os__}'"
     raise NotImplementedError(err_msg)
 
-__os__: SupportedOs = _os
 
 
 __xdg_config_home__ = pathlib.Path.home() / _xdg_config_home / __package__

@@ -8,7 +8,7 @@ import pydantic
 
 SupportedOs = t.Literal["linux", "win32"]
 
-PythonVersions = t.Literal["3.10", "3.11", "3.12", "3.13"]
+PythonVersions = t.Literal["", "3.10", "3.11", "3.12", "3.13"]
 
 
 class InitKwargs(t.TypedDict):
@@ -16,7 +16,7 @@ class InitKwargs(t.TypedDict):
 
     path: str
     name: str | None
-    python_version: PythonVersions | None
+    python_version: PythonVersions
 
 
 GitEmails = pydantic.EmailStr | t.Literal[""] | None

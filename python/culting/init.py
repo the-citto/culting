@@ -23,17 +23,13 @@ class Init:
 
     def __init__(self, **kwargs: t.Unpack[InitKwargs]) -> None:
         """Init."""
-        path = kwargs.get("path")
+        path = kwargs["path"]
         self.proj_path = pathlib.Path(path).absolute()
-        self.name = self._set_name(name=kwargs.get("name"))
-        # python_version = kwargs.get("python_version")
-        self._set_python_version(python_version=kwargs.get("python_version"))
-        # self.git = Git(proj_path=self.proj_path)
-        # self.git.init()
-        if __os__ == "linux":
-            ...
-        else:
-            ...
+        self.name = self._set_name(name=kwargs["name"])
+        self.git = Git()
+        self.git.init(proj_path=self.proj_path)
+        self.python_version = self._set_python(python_version=kwargs["python_version"])
+        logger.info(f"Package '{self.name}' initialized in {self.proj_path}")
 
     def _set_name(self, name: str | None) -> str:
         if name is None:
@@ -47,8 +43,23 @@ class Init:
         logger.info(f"Initializing package '{name}'")
         return name
 
-    def _set_python_version(self, python_version: PythonVersions | None) -> None:
-        ...
+    def _set_python(self, python_version: PythonVersions) -> str:
+        python_version_path = self.proj_path / ".python-version"
+        if not python_version and python_version_path.is_file():
+            with python_version_path.open() as file:
+                python_version_file = file.read().strip()
+            if python_version_file in t.get_args(PythonVersions):
+                python_version = t.cast(PythonVersions, python_version_file)
+            else:
+                warn_msg = f"Found '.python-version' file with invalid version '{python_version_file}'"
+                warn_msg += "\n'.python-version' will be changed with the system's default python version"
+                logger.warning(warn_msg)
+        if __os__ == "linux":
+            python_version_valid = Pyenv(python_version=python_version).major_minor
+            with python_version_path.open("w") as file:
+                file.write(python_version_valid)
+            return python_version_valid
+        raise NotImplementedError
 
 
 
@@ -66,19 +77,71 @@ class Command(abc.ABC):
     def binary(self) -> str:
         """Command binary name or fully qualified path."""
 
+    def execute(self, command: list[t.Any]) -> str:
+        """Execute."""
+        _command = [self.binary_path, *command]
+        proc = subprocess.Popen(
+            _command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = proc.communicate()
+        if stderr:
+            err_msg = stderr.decode("utf-8")
+            raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, command)), output=err_msg)
+        return stdout.decode("utf-8")
+
+
 
 class Git(Command):
     """Git."""
 
+    @property
+    def binary(self) -> str:
+        """Git binary."""
+        return "git"
+
+    def init(self, proj_path: pathlib.Path) -> None:
+        """Init repo."""
+        if (proj_path / ".git").is_dir():
+            return
+        command = ["init", proj_path]
+        _ = self.execute(command=command)
 
 
-
-class Pyenv:
+class Pyenv(Command):
     """Pyenv."""
 
+    def __init__(self, python_version: PythonVersions) -> None:
+        """Init."""
+        self.python_version = python_version
+        super().__init__()
 
-class PyLauncher:
+    @property
+    def binary(self) -> str:
+        """Pyenv binary."""
+        return f"python{self.python_version}"
+
+    @property
+    def major_minor(self) -> str:
+        """Major.minor python version."""
+        command = ["-V"]
+        stdout = self.execute(command)
+        major_minor_re = re.search(r"Python (3.[0-9]+).", stdout)
+        if major_minor_re is None:
+            err_msg = f"Unexpected output '{stdout}"
+            raise InitError(err_msg)
+        return major_minor_re.group(1)
+
+class PyLauncher(Command):
     """Py launcher."""
+
+
+
+
+
+
+
 
 # class Git:
 #     """Git."""

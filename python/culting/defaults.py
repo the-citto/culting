@@ -1,11 +1,5 @@
 """Defaults."""
 
-# monitor `mypy` integration for `pydantic.compute_field` and get rid of type: ignore
-# URL: https://docs.pydantic.dev/2.0/usage/computed_fields/
-# type: ignore[prop-decorator]
-
-import typing as t
-
 import pydantic
 import tomlkit as toml
 
@@ -50,14 +44,14 @@ class CultingConf(pydantic.BaseModel):
 
 
 
-with conf_default_path.open("w") as d:
-    toml.dump(CultingConf().model_dump(), d, sort_keys=True)
+with conf_default_path.open("w") as file:
+    toml.dump(CultingConf().model_dump(), file, sort_keys=True)
 
 
 if conf_custom_path.is_file():
-    with conf_custom_path.open("r") as c:
-        t = toml.load(c).value
-        culting_conf = CultingConf(**t)
+    with conf_custom_path.open("r") as file:
+        toml_value = toml.load(file).value
+        culting_conf = CultingConf(**toml_value)
 else:
     culting_conf = CultingConf()
 

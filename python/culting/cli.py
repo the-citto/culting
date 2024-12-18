@@ -1,10 +1,12 @@
 """CLI."""
 
+import subprocess
 import typing as t
 
 import rich_click as click
 
 from . import (
+    CommandNotFoundError,
     InitError,
     InitKwargs,
     PythonVersions,
@@ -37,7 +39,8 @@ If not specified the system default will be used.
 @click.option(
     "--python-version",
     type=click.Choice(t.get_args(PythonVersions)),
-    required=False,
+    default="",
+    # required=False,
     help=help_python_version,
 )
 @click.pass_context
@@ -46,7 +49,11 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
     from .init import Init
     try:
         Init(**kwargs)
-    except InitError as err:
+    except (
+        InitError,
+        subprocess.CalledProcessError,
+        CommandNotFoundError,
+    ) as err:
         logger.error(err)
         ctx.abort()
 
