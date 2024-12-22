@@ -142,6 +142,8 @@ class Pyenv(PythonManager):
 
     def get_full_path(self, python_version: str) -> str | None:
         """Get full path of specified version, if exists."""
+        if self.binary is None:
+            return None
         if __os__ == "linux":
             pyenv_root = self.execute(["root"]).strip()
         elif __os__ == "win32":
@@ -177,6 +179,8 @@ class Py(PythonManager):
 
     def get_full_path(self, python_version: str) -> str | None:
         """Get full path of specified version, if exists."""
+        if self.binary is None:
+            return None
         py_list_paths = self.execute(["--list-paths"])
         python_path_re = re.search(re.escape(python_version) + r"[* ]+(.+python.exe)", py_list_paths)
         if python_path_re is None:
@@ -214,6 +218,8 @@ class Uv(PythonManager):
 
     def get_full_path(self, python_version: str) -> str | None:
         """Get full path of specified version, if exists."""
+        if self.binary is None:
+            return None
         err_msg = "UV not implemented yet."
         raise NotImplementedError(err_msg)
 
