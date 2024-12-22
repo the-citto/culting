@@ -106,7 +106,7 @@ help_name = "Set the package name, defaults to the directory name. Must be PEP 8
 
 @cli.command()
 @click.argument("path", type=click.Path(), default=".")
-@click.option("--name", required=False, help=help_name)
+@click.option("-n", "--name", required=False, help=help_name)
 @click.option(
     "-p", "--python-version",
     type=click.Choice(choice_vers),

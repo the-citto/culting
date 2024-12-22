@@ -72,6 +72,7 @@ class Init:
                 continue
             logger.info(p)
             logger.info(python_manager.get_full_path(python_version=_python_version))
+            break
 
         # logger.info(_python_version)
         # logger.info(culting_conf.python.managers_priority)
