@@ -71,7 +71,7 @@ class Init:
             if python_full_path is None:
                 continue
             logger.info(p)
-            logger.info(python_manager.get_full_path(python_version=_python_version))
+            logger.info(python_full_path)
             break
 
         # logger.info(_python_version)

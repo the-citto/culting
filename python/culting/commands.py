@@ -178,8 +178,11 @@ class Py(PythonManager):
     def get_full_path(self, python_version: str) -> str | None:
         """Get full path of specified version, if exists."""
         py_list_paths = self.execute(["--list-paths"])
-        logger.info(py_list_paths.split())
-        return python_version
+        python_path_re = re.search(re.escape(python_version) + r"[* ]+(.+python.exe)", py_list_paths)
+        if python_path_re is None:
+            return None
+        return python_path_re.group(1)
+
 
 
 
