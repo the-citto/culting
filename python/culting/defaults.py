@@ -1,9 +1,14 @@
 """Defaults."""
 
+import typing as t
+
 import pydantic
 import tomlkit as toml
 
-from . import __xdg_config_home__
+from . import (
+    PythonManager,
+    __xdg_config_home__,
+)
 
 
 
@@ -31,10 +36,29 @@ class PackageConf(pydantic.BaseModel):
     src: str = "python"
 
 
+class PythonConf(pydantic.BaseModel):
+    """Python config."""
+
+    managers_priority: t.Sequence[PythonManager] = ["pyenv", "py", "uv"]
+
+    @pydantic.field_validator("managers_priority", mode="before")
+    @classmethod
+    def _validate_managers_priority(
+        cls,
+        managers_priority: tuple[PythonManager, ...],
+    ) -> tuple[PythonManager, ...]:
+        if len(managers_priority) != len(set(managers_priority)):
+            err_msg = f"Only unique entries allowd [{', '.join(managers_priority)}]"
+            raise ValueError(err_msg)
+        return managers_priority
+
+
+
 class CultingConf(pydantic.BaseModel):
     """All config."""
 
     setup: SetupConf = SetupConf()
+    python: PythonConf = PythonConf()
     git: GitConf = GitConf()
     package: PackageConf = PackageConf()
 

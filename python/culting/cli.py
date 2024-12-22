@@ -22,10 +22,6 @@ from .commands import (
 
 
 
-advanced_use = {
-    "name": "Advanced options",
-    "options": ["--help"],
-}
 click.rich_click.OPTION_GROUPS = {
     "culting": [
         {
@@ -40,15 +36,8 @@ click.rich_click.OPTION_GROUPS = {
             "options": ["--name"],
         },
         {
-            "name": "Python Versions",
-            "options": ["--default", "--pyenv", "--py", "--uv"],
-            "table_styles": {
-                "row_styles": ["white", "bright_green", "bright_blue", "bright_magenta"],
-            },
-        },
-        {
-            "name": "Development",
-            "options": ["--venv", "--src"],
+            "name": "Developers Corner",
+            "options": ["--python-version", "--venv", "--src"],
         },
         {
             "name": "Advanced Options",
@@ -57,15 +46,6 @@ click.rich_click.OPTION_GROUPS = {
     ],
 
 }
-
-@click.group(
-    context_settings={"help_option_names": ["-h", "--help"]},
-    # invoke_without_command=True,
-)
-@click.version_option(__version__, "-V", "--version")
-def cli() -> None:
-    """Culting, a Python projects' manager."""
-
 
 
 class MutuallyExclusiveOption(click.Option):
@@ -91,7 +71,6 @@ class MutuallyExclusiveOption(click.Option):
         args: list[str],
     ) -> tuple[t.Any, list[str]]:
         """Hadle parse result."""
-        print(opts)
         if self.mutually_exclusive.intersection(opts) and self.name in opts:
             _mutually_exclusive = [self.name, *self.mutually_exclusive]
             _options = ", ".join(
@@ -104,68 +83,48 @@ class MutuallyExclusiveOption(click.Option):
 
 
 
-python_system_version = Python().version
-pyenv_versions = Pyenv().versions
-py_versions = Py().versions
-uv_versions = Uv().versions
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    # invoke_without_command=True,
+)
+@click.version_option(__version__, "-V", "--version")
+def cli() -> None:
+    """Culting, a Python projects' manager."""
 
-help_name = """\
-Set the package name, PEP 8 and PEP 423 compliant.
 
-\b
-Defaults to directory name.
-"""
-help_python_version = """\
-Specify a python version via `{package_manager}`
-\b
 
-"""
+
+py_default_ver = Python().version
+pyenv_vers = Pyenv().versions
+py_vers = Py().versions
+uv_vers = Uv().versions
+choice_vers = sorted(
+    {py_default_ver, *pyenv_vers, *py_vers, *uv_vers},
+    key=lambda v: int(v.split(".")[1]),
+)
+help_name = "Set the package name, PEP 8 and PEP 423 compliant. Defaults to the directory name."
 
 @cli.command()
 @click.argument("path", type=click.Path(), default=".")
-@click.option("--name", type=str, required=False, help=help_name)
+@click.option("--name", required=False, help=help_name)
 @click.option(
-    "--default",
-    cls=MutuallyExclusiveOption,
-    mutually_exclusive=["pyenv", "py", "uv"],
-    is_flag=True,
-    help=f"Default `system` python '{python_system_version}'\n\n\b",
-)
-@click.option(
-    "--pyenv",
-    cls=MutuallyExclusiveOption,
-    mutually_exclusive=["default", "py", "uv"],
-    type=click.Choice(pyenv_versions),
-    required=False,
-    help=help_python_version.format(package_manager="pyenv"),
-)
-@click.option(
-    "--py",
-    cls=MutuallyExclusiveOption,
-    mutually_exclusive=["default", "pyenv", "uv"],
-    type=click.Choice(py_versions),
-    required=False,
-    help=help_python_version.format(package_manager="py"),
-)
-@click.option(
-    "--uv",
-    cls=MutuallyExclusiveOption,
-    mutually_exclusive=["default", "pyenv", "py"],
-    type=click.Choice(uv_versions),
-    required=False,
-    help=help_python_version.format(package_manager="uv"),
+    "-p", "--python-version",
+    type=click.Choice(choice_vers),
+    default=py_default_ver,
+    show_default=True,
+    help="Specify a python version",
 )
 @click.option(
     "--venv",
     default=culting_conf.package.venv,
     show_default=True,
-    help="Specify `venv` name.",
+    help="Specify venv name.",
 )
 @click.option(
     "--src",
     default=culting_conf.package.src,
     show_default=True,
-    help="Specify `src` folder name.",
+    help="Specify src folder name.",
 )
 @click.pass_context
 def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:

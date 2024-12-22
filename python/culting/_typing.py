@@ -8,6 +8,7 @@ import pydantic
 
 SupportedOs = t.Literal["linux", "win32"]
 
+PythonManager = t.Literal["pyenv", "py", "uv"]
 
 
 class InitKwargs(t.TypedDict):
@@ -15,8 +16,7 @@ class InitKwargs(t.TypedDict):
 
     path: str
     name: str | None
-    default: bool
-    pyenv: str | None
+    python_version: str | None
     py: str | None
     uv: str | None
     venv: str

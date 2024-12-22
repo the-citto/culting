@@ -52,15 +52,15 @@ class Init:
         return name
 
     def _set_sys_python(self) -> Python:
-        pyenv = self.kwargs["pyenv"]
-        if pyenv is not None:
-            ...
-        py = self.kwargs["py"]
-        if py is not None:
-            ...
-        uv = self.kwargs["uv"]
-        if uv is not None:
-            ...
+        # pyenv = self.kwargs["pyenv"]
+        # if pyenv is not None:
+        #     ...
+        # py = self.kwargs["py"]
+        # if py is not None:
+        #     ...
+        # uv = self.kwargs["uv"]
+        # if uv is not None:
+        #     ...
         return Python()
 
     def _set_package_files(self) -> None:
