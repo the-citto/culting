@@ -32,10 +32,10 @@ class Init:
     def __init__(self, **kwargs: t.Unpack[InitKwargs]) -> None:
         """Init."""
         self.kwargs = kwargs
-        self._verify_empty()
-        self.name = self._set_name()
-        self.git = Git()
-        self.git.init(proj_path=self.proj_path)
+        # self._verify_empty()
+        # self.name = self._set_name()
+        # self.git = Git()
+        # self.git.init(proj_path=self.proj_path)
         self.sys_python = self._set_sys_python()
         # self._set_package_files()
 
