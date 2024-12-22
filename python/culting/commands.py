@@ -62,7 +62,6 @@ class Python(Command):
     def binary_name(self) -> str:
         """Binary name or fully qualified path."""
         _python = shutil.which("python")
-        logger.info(_python)
         if _python is not None and not _python.lower().endswith(".bat"): # avoi pyenv-win .bat file
             return _python
         _py = shutil.which("py")
@@ -77,7 +76,6 @@ class Python(Command):
                 err_msg = stderr.decode("utf-8")
                 raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, command)), output=err_msg)
             _stdout = stdout.decode("utf-8")
-            logger.info(_stdout)
             _python_path_re = re.search(r"\* *([a-zA-Z]{1}:\\.*python.exe)", _stdout)
             if _python_path_re is not None:
                 return _python_path_re.group(1)
@@ -164,6 +162,19 @@ class Uv(PythonManager):
         """Command and options to get versions."""
         return ["python", "list", "--only-installed"]
 
+    @property
+    def versions(self) -> list[str]:
+        """Available versions."""
+        if self.binary is None:
+            return []
+        versions_output = self.execute(self.versions_command)
+        uv_python_dir = self.execute(["python", "dir"])
+        versions = re.findall(rf"{uv_python_dir}(3\.\d+)", versions_output)
+        logger.info(versions)
+        return sorted(
+            set(versions),
+            key=lambda v: int(v.split(".")[1]),
+        )
 
 
 
