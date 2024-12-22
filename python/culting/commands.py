@@ -168,62 +168,14 @@ class Uv(PythonManager):
         if self.binary is None:
             return []
         versions_output = self.execute(self.versions_command)
-        logger.info(versions_output)
-        uv_python_dir = self.execute(["python", "dir"])
-        logger.info(uv_python_dir)
-        versions = re.findall(re.escape(uv_python_dir) + r".*?(3\.\d+)", versions_output)
-        logger.info(versions)
+        uv_python_dir = self.execute(["python", "dir"]).strip()
+        versions = re.findall(re.escape(uv_python_dir) + ".*(3\\.\\d+)", versions_output)
         return sorted(
             set(versions),
             key=lambda v: int(v.split(".")[1]),
         )
 
 
-
-
-
-# class SysPython(Command):
-#     """System python."""
-#
-#     def __init__(self, python_version: str) -> None:
-#         """Init."""
-#         self.python_version = python_version
-#         super().__init__()
-#
-#     @property
-#     def binary_name(self) -> str:
-#         """Pyenv binary."""
-#         if __os__ == "linux":
-#             return f"python{self.python_version}"
-#         if __os__ == "win32":
-#             raise NotImplementedError
-#             # return "py"
-#         raise NotImplementedError
-#
-#     @property
-#     def version(self) -> str:
-#         """Return major.minor python version."""
-#         command = ["--version"]
-#         stdout = self.execute(command)
-#         major_minor_re = re.search(r"Python (3.[0-9]+).", stdout)
-#         if major_minor_re is None:
-#             err_msg = f"Unexpected output '{stdout}"
-#             raise InitError(err_msg)
-#         _version = major_minor_re.group(1)
-#         if _version in t.get_args(str):
-#             version= t.cast(str, major_minor_re.group(1))
-#         else:
-#             err_msg = f"Invalid Python version '{_version}'"
-#             raise InitError(err_msg)
-#         if version != self.python_version:
-#             self.__init__(python_version=version)
-#         return version
-#
-#     @property
-#     def system_versions(self) -> None:
-#         """Return major.minor python versions found in the system."""
-#         versions = self.execute(["versions"])
-#         logger.info(versions)
 
 
 class Git(Command):
@@ -242,12 +194,6 @@ class Git(Command):
         command = ["init", proj_path]
         logger.info(f"Git repository initialized in '{proj_path.name}'")
         _ = self.execute(command=command)
-
-### win32
-# uv ptython list --only-installed
-# <python long name>    AppData\Roaming\uv\python\<python long name>\python.exe
-# <python long name>    AppData\Local\Programs\Python312\python.exe
-### linux
 
 
 
