@@ -26,8 +26,8 @@ pyenv_versions = Pyenv().versions
 py_versions = Py().versions
 uv_versions = Uv().versions
 versions_click_options = [
-    ("--pyenv-python", "green") if pyenv_versions else None,
-    ("--py-python", "magenta") if py_versions else None,
+    ("--pyenv-python", "bright_green") if pyenv_versions else None,
+    ("--py-python", "bright_blue") if py_versions else None,
     ("--uv-python", "bright_magenta") if uv_versions else None,
 ]
 
