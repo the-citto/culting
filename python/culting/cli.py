@@ -10,6 +10,7 @@ from . import (
     InitError,
     InitKwargs,
     __version__,
+    culting_conf,
     logger,
 )
 from .commands import (
@@ -21,16 +22,6 @@ from .commands import (
 
 
 
-python_system_version = Python().version
-pyenv_versions = Pyenv().versions
-py_versions = Py().versions
-uv_versions = Uv().versions
-versions_click_options = [
-    ("--pyenv-python", "bright_green") if pyenv_versions else None,
-    ("--py-python", "bright_blue") if py_versions else None,
-    ("--uv-python", "bright_magenta") if uv_versions else None,
-]
-
 advanced_use = {
     "name": "Advanced options",
     "options": ["--help"],
@@ -38,7 +29,7 @@ advanced_use = {
 click.rich_click.OPTION_GROUPS = {
     "culting": [
         {
-            "name": "Advanced options",
+            "name": "Advanced Options",
             "options": ["--help", "--version"],
         },
     ],
@@ -49,14 +40,18 @@ click.rich_click.OPTION_GROUPS = {
             "options": ["--name"],
         },
         {
-            "name": "Python Managers",
-            "options": [v[0] for v in versions_click_options if v is not None],
+            "name": "Python Versions",
+            "options": ["--default", "--pyenv", "--py", "--uv"],
             "table_styles": {
-                "row_styles": [v[1] for v in versions_click_options if v is not None],
+                "row_styles": ["white", "bright_green", "bright_blue", "bright_magenta"],
             },
         },
         {
-            "name": "Advanced options",
+            "name": "Development",
+            "options": ["--venv", "--src"],
+        },
+        {
+            "name": "Advanced Options",
             "options": ["--help"],
         },
     ],
@@ -90,22 +85,29 @@ class MutuallyExclusiveOption(click.Option):
         super().__init__(*args, **kwargs)
 
     def handle_parse_result(
-            self,
-            ctx: click.Context,
-            opts: t.Mapping[str, t.Any],
-            args: list[str],
+        self,
+        ctx: click.Context,
+        opts: t.Mapping[str, t.Any],
+        args: list[str],
     ) -> tuple[t.Any, list[str]]:
         """Hadle parse result."""
+        print(opts)
         if self.mutually_exclusive.intersection(opts) and self.name in opts:
+            _mutually_exclusive = [self.name, *self.mutually_exclusive]
             _options = ", ".join(
                 f"--{e.replace('_', '-')}"
-                for e in self.mutually_exclusive
+                for e in _mutually_exclusive
             )
             err_msg = f"Illegal usage: [{_options}] are mutually exclusive."
             raise click.UsageError(err_msg)
         return super().handle_parse_result( ctx, opts, args)
 
 
+
+python_system_version = Python().version
+pyenv_versions = Pyenv().versions
+py_versions = Py().versions
+uv_versions = Uv().versions
 
 help_name = """\
 Set the package name, PEP 8 and PEP 423 compliant.
@@ -114,42 +116,56 @@ Set the package name, PEP 8 and PEP 423 compliant.
 Defaults to directory name.
 """
 help_python_version = """\
-Select a specific python version via `{package_manager}`.
-"""
-help_python_version += f"""
+Specify a python version via `{package_manager}`
 \b
-If not specified the `system` default '{python_system_version}' will be used.
+
 """
 
 @cli.command()
 @click.argument("path", type=click.Path(), default=".")
 @click.option("--name", type=str, required=False, help=help_name)
 @click.option(
-    "--pyenv-python",
+    "--default",
     cls=MutuallyExclusiveOption,
-    mutually_exclusive=["py_python", "uv_python"],
+    mutually_exclusive=["pyenv", "py", "uv"],
+    is_flag=True,
+    help=f"Default `system` python '{python_system_version}'\n\n\b",
+)
+@click.option(
+    "--pyenv",
+    cls=MutuallyExclusiveOption,
+    mutually_exclusive=["default", "py", "uv"],
     type=click.Choice(pyenv_versions),
-    hidden=not pyenv_versions,
     required=False,
     help=help_python_version.format(package_manager="pyenv"),
 )
 @click.option(
-    "--py-python",
+    "--py",
     cls=MutuallyExclusiveOption,
-    mutually_exclusive=["pyenv_python", "uv_python"],
+    mutually_exclusive=["default", "pyenv", "uv"],
     type=click.Choice(py_versions),
-    hidden=not py_versions,
     required=False,
     help=help_python_version.format(package_manager="py"),
 )
 @click.option(
-    "--uv-python",
+    "--uv",
     cls=MutuallyExclusiveOption,
-    mutually_exclusive=["pyenv_python", "uv_python"],
+    mutually_exclusive=["default", "pyenv", "py"],
     type=click.Choice(uv_versions),
-    hidden=not uv_versions,
     required=False,
     help=help_python_version.format(package_manager="uv"),
+)
+@click.option(
+    "--venv",
+    default=culting_conf.package.venv,
+    show_default=True,
+    help="Specify `venv` name.",
+)
+@click.option(
+    "--src",
+    default=culting_conf.package.src,
+    show_default=True,
+    help="Specify `src` folder name.",
 )
 @click.pass_context
 def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:

@@ -9,15 +9,18 @@ import pydantic
 SupportedOs = t.Literal["linux", "win32"]
 
 
+
 class InitKwargs(t.TypedDict):
     """Init kwargs."""
 
     path: str
     name: str | None
-    default_python: str
-    pyenv_python: str | None
-    py_python: str | None
-    uv_python: str | None
+    default: bool
+    pyenv: str | None
+    py: str | None
+    uv: str | None
+    venv: str
+    src: str
 
 
 GitEmails = pydantic.EmailStr | t.Literal[""] | None

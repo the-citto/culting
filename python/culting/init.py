@@ -12,6 +12,7 @@ from . import (
 )
 from .commands import (
     Git,
+    Python,
 )
 
 
@@ -21,23 +22,24 @@ class Init:
 
     def __init__(self, **kwargs: t.Unpack[InitKwargs]) -> None:
         """Init."""
-        path = kwargs["path"]
-        self.proj_path = pathlib.Path(path).absolute()
+        self.kwargs = kwargs
         self._verify_empty()
-        self.name = self._set_name(name=kwargs["name"])
-        # self.sys_python = SysPython(python_version=kwargs.get("python_version"))
+        self.name = self._set_name()
         self.git = Git()
         self.git.init(proj_path=self.proj_path)
-        self._set_package_files()
-        logger.info(f"Package '{self.name}' initialized in {self.proj_path}")
+        self.sys_python = self._set_sys_python()
+        # self._set_package_files()
 
     def _verify_empty(self) -> None:
+        path = self.kwargs["path"]
+        self.proj_path = pathlib.Path(path).absolute()
         self.proj_path.mkdir(parents=True, exist_ok=True)
         if any(self.proj_path.iterdir()):
             err_msg = f"{self.proj_path} is not empty"
             raise InitError(err_msg)
 
-    def _set_name(self, name: str | None) -> str:
+    def _set_name(self) -> str:
+        name = self.kwargs["name"]
         if name is None:
             name = self.proj_path.name
         valid_name = re.match(r"[a-z_][a-z0-9_]+$", name)
@@ -49,30 +51,43 @@ class Init:
         logger.info(f"Initializing package '{name}'")
         return name
 
+    def _set_sys_python(self) -> Python:
+        pyenv = self.kwargs["pyenv"]
+        if pyenv is not None:
+            ...
+        py = self.kwargs["py"]
+        if py is not None:
+            ...
+        uv = self.kwargs["uv"]
+        if uv is not None:
+            ...
+        return Python()
+
     def _set_package_files(self) -> None:
-        src_pkg_dir = self.proj_path / culting_conf.package.src_dir / self.name
+        src_pkg_dir = self.proj_path / culting_conf.package.src / self.name
         src_pkg_dir.mkdir(parents=True)
-        pkg_init_txt = (
-            '"""Init."""\n\n'
-            "import importlib.metadata\n"
-            "\n\n\n"
-            "__version__ = importlib.metadata.version(__name__)\n"
-            "\n"
-                "__all__: list[str] = []\n"
-        )
-        pkg_init_path = src_pkg_dir / "__init__.py"
-        with pkg_init_path.open("w") as file:
-            file.write(pkg_init_txt)
-        pkg_main_txt = (
-            '"""Main."""\n\n'
-            "def main() -> None:\n"
-            '    """Run entry point."""\n\n\n'
-            'if __name__ == "__main__":\n'
-            "    main()\n"
-        )
-        pkg_main_path = src_pkg_dir / "__main__.py"
-        with pkg_main_path.open("w") as file:
-            file.write(pkg_main_txt)
+        # pkg_init_txt = (
+        #     '"""Init."""\n\n'
+        #     "import importlib.metadata\n"
+        #     "\n\n\n"
+        #     "__version__ = importlib.metadata.version(__name__)\n"
+        #     "\n"
+        #         "__all__: list[str] = []\n"
+        # )
+        # pkg_init_path = src_pkg_dir / "__init__.py"
+        # with pkg_init_path.open("w") as file:
+        #     file.write(pkg_init_txt)
+        # pkg_main_txt = (
+        #     '"""Main."""\n\n'
+        #     "def main() -> None:\n"
+        #     '    """Run entry point."""\n\n\n'
+        #     'if __name__ == "__main__":\n'
+        #     "    main()\n"
+        # )
+        # pkg_main_path = src_pkg_dir / "__main__.py"
+        # with pkg_main_path.open("w") as file:
+        #     file.write(pkg_main_txt)
+        logger.info(f"Package '{self.name}' initialized in {self.proj_path}")
 
 
 

@@ -18,8 +18,6 @@ import typing as t
 
 from . import (
     CommandNotFoundError,
-    InitError,
-    __os__,
     logger,
 )
 
@@ -74,7 +72,7 @@ class Python(Command):
             stdout, stderr = proc.communicate()
             if stderr:
                 err_msg = stderr.decode("utf-8")
-                raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, command)), output=err_msg)
+                raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, _py)), output=err_msg)
             _stdout = stdout.decode("utf-8")
             _python_path_re = re.search(r"\* *([a-zA-Z]{1}:\\.*python.exe)", _stdout)
             if _python_path_re is not None:
@@ -92,6 +90,7 @@ class Python(Command):
             err_msg = "Python version not found"
             raise RuntimeError(err_msg)
         return version_re.group()
+
 
 
 class PythonManager(Command, abc.ABC):
@@ -120,6 +119,7 @@ class PythonManager(Command, abc.ABC):
     @abc.abstractmethod
     def versions_command(self) -> list[str]:
         """Command and options to get versions."""
+
 
 class Pyenv(PythonManager):
     """Pyenv."""

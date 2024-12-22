@@ -27,7 +27,8 @@ class GitConf(pydantic.BaseModel):
 class PackageConf(pydantic.BaseModel):
     """Package config."""
 
-    src_dir: str = "python"
+    venv: str = ".venv"
+    src: str = "python"
 
 
 class CultingConf(pydantic.BaseModel):
