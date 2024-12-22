@@ -63,7 +63,7 @@ class Python(Command):
         """Binary name or fully qualified path."""
         _python = shutil.which("python")
         logger.info(_python)
-        if _python is not None:
+        if _python is not None and not _python.lower().endswith(".bat"): # avoi pyenv-win .bat file
             return _python
         _py = shutil.which("py")
         if _py is not None:
