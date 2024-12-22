@@ -62,6 +62,7 @@ class Python(Command):
     def binary_name(self) -> str:
         """Binary name or fully qualified path."""
         _python = shutil.which("python")
+        logger.info(_python)
         if _python is not None:
             return _python
         _py = shutil.which("py")
@@ -76,6 +77,7 @@ class Python(Command):
                 err_msg = stderr.decode("utf-8")
                 raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, command)), output=err_msg)
             _stdout = stdout.decode("utf-8")
+            logger.info(_stdout)
             _python_path_re = re.search(r"\* *([a-zA-Z]{1}:\\.*python.exe)", _stdout)
             if _python_path_re is not None:
                 return _python_path_re.group(1)
