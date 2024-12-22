@@ -177,6 +177,8 @@ class Py(PythonManager):
 
     def get_full_path(self, python_version: str) -> str | None:
         """Get full path of specified version, if exists."""
+        py_list_paths = self.execute(["--list-paths"])
+        logger.info(py_list_paths.split())
         return python_version
 
 
@@ -209,9 +211,8 @@ class Uv(PythonManager):
 
     def get_full_path(self, python_version: str) -> str | None:
         """Get full path of specified version, if exists."""
-        py_list_paths = self.execute(["--list-paths"])
-        logger.info(py_list_paths.split())
-        return python_version
+        err_msg = "UV not implemented yet."
+        raise NotImplementedError(err_msg)
 
 
 
