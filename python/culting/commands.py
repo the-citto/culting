@@ -171,7 +171,7 @@ class Uv(PythonManager):
         logger.info(versions_output)
         uv_python_dir = self.execute(["python", "dir"])
         logger.info(uv_python_dir)
-        versions = re.findall(re.escape(uv_python_dir) + r".*(3\.\d+)", versions_output)
+        versions = re.findall(re.escape(uv_python_dir) + r".*?(3\.\d+)", versions_output)
         logger.info(versions)
         return sorted(
             set(versions),
