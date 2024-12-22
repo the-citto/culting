@@ -24,13 +24,10 @@ class GitConf(pydantic.BaseModel):
     use_email: bool = True
 
 
-class PyenvConf(pydantic.BaseModel):
-    """Pyenv config."""
+class PackageConf(pydantic.BaseModel):
+    """Package config."""
 
-
-class PyLauncherConf(pydantic.BaseModel):
-    """Py launcher config."""
-
+    src_dir: str = "python"
 
 
 class CultingConf(pydantic.BaseModel):
@@ -38,8 +35,7 @@ class CultingConf(pydantic.BaseModel):
 
     setup: SetupConf = SetupConf()
     git: GitConf = GitConf()
-    pyenv: PyenvConf = PyenvConf()
-    pylauncher: PyLauncherConf = PyLauncherConf()
+    package: PackageConf = PackageConf()
 
 
 

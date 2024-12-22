@@ -1,4 +1,10 @@
-"""Variables."""
+"""
+Variables.
+
+Refs:
+    sys.platform: https://docs.python.org/3/library/sys.html#sys.platform
+    XDG Base Directory Specification: https://specifications.freedesktop.org/basedir-spec/latest/
+"""
 
 import importlib.metadata
 import pathlib

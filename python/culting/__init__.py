@@ -1,10 +1,4 @@
-"""
-Init.
-
-Refs:
-    sys.platform: https://docs.python.org/3/library/sys.html#sys.platform
-    XDG Base Directory Specification: https://specifications.freedesktop.org/basedir-spec/latest/
-"""
+"""Init."""
 
 from ._exceptions import (
     CommandNotFoundError,
@@ -15,7 +9,6 @@ from ._logger import (
 )
 from ._typing import (
     InitKwargs,
-    PythonVersions,
 )
 from ._vars import (
     __os__,
@@ -33,7 +26,6 @@ __all__: list[str] = [
     "CommandNotFoundError",
     "InitError",
     "InitKwargs",
-    "PythonVersions",
     "__os__",
     "__version__",
     "__xdg_config_home__",
