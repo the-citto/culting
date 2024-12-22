@@ -102,7 +102,7 @@ choice_vers = sorted(
     {py_default_ver, *pyenv_vers, *py_vers, *uv_vers},
     key=lambda v: int(v.split(".")[1]),
 )
-help_name = "Set the package name, PEP 8 and PEP 423 compliant. Defaults to the directory name."
+help_name = "Set the package name, defaults to the directory name. Must be PEP 8 and PEP 423 compliant."
 
 @cli.command()
 @click.argument("path", type=click.Path(), default=".")

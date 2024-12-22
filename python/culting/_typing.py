@@ -16,7 +16,7 @@ class InitKwargs(t.TypedDict):
 
     path: str
     name: str | None
-    python_version: str | None
+    python_version: str
     py: str | None
     uv: str | None
     venv: str

@@ -10,6 +10,7 @@ Click reference:
 """
 
 import abc
+import os
 import pathlib
 import re
 import shutil
@@ -18,6 +19,7 @@ import typing as t
 
 from . import (
     CommandNotFoundError,
+    __os__,
     logger,
 )
 
@@ -60,7 +62,7 @@ class Python(Command):
     def binary_name(self) -> str:
         """Binary name or fully qualified path."""
         _python = shutil.which("python")
-        if _python is not None and not _python.lower().endswith(".bat"): # avoi pyenv-win .bat file
+        if _python is not None and not _python.lower().endswith(".bat"): # deal with pyenv-win .bat file
             return _python
         _py = shutil.which("py")
         if _py is not None:
@@ -77,7 +79,6 @@ class Python(Command):
             _python_path_re = re.search(r"\* *([a-zA-Z]{1}:\\.*python.exe)", _stdout)
             if _python_path_re is not None:
                 return _python_path_re.group(1)
-
         err_msg = "Python not found."
         raise CommandNotFoundError(err_msg)
 
@@ -120,6 +121,11 @@ class PythonManager(Command, abc.ABC):
     def versions_command(self) -> list[str]:
         """Command and options to get versions."""
 
+    @abc.abstractmethod
+    def get_full_path(self, python_version: str) -> str | None:
+        """Get full path of specified version, if exists."""
+
+
 
 class Pyenv(PythonManager):
     """Pyenv."""
@@ -134,6 +140,27 @@ class Pyenv(PythonManager):
         """Command and options to get versions."""
         return ["versions", "--skip-envs"]
 
+    def get_full_path(self, python_version: str) -> str | None:
+        """Get full path of specified version, if exists."""
+        if __os__ == "linux":
+            pyenv_root = self.execute(["root"]).strip()
+        elif __os__ == "win32":
+            pyenv_root = os.getenv("PYENV_ROOT")
+        else:
+            raise OSError
+        if pyenv_root is None:
+            return None
+        pyenv_version_paths = [
+            path
+            for path in pathlib.Path(pyenv_root, "versions").glob(f"{python_version}*")
+            if re.search(re.escape(python_version) + r"\.\d+$", path.name) is not None
+        ]
+        if not pyenv_version_paths:
+            return None
+        max_version = max(pyenv_version_paths, key=lambda v: int(str(v).split(".")[-1]))
+        return str(max_version)
+
+
 
 class Py(PythonManager):
     """Py."""
@@ -147,6 +174,11 @@ class Py(PythonManager):
     def versions_command(self) -> list[str]:
         """Command and options to get versions."""
         return ["--list-paths"]
+
+    def get_full_path(self, python_version: str) -> str | None:
+        """Get full path of specified version, if exists."""
+        return python_version
+
 
 
 class Uv(PythonManager):
@@ -175,6 +207,10 @@ class Uv(PythonManager):
             key=lambda v: int(v.split(".")[1]),
         )
 
+    def get_full_path(self, python_version: str) -> str | None:
+        """Get full path of specified version, if exists."""
+        
+        return python_version
 
 
 

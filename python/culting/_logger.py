@@ -13,6 +13,8 @@ from ._vars import logfile_path
 
 
 
+FILE_MAX_BITES = 100_000
+
 class ColorFormatter(logging.Formatter):
     """
     Color formatter.
@@ -96,7 +98,7 @@ logging.config.dictConfig({
             "level": "DEBUG",
             "formatter": "file",
             "filename": logfile_path,
-            "maxBytes": 10_000,
+            "maxBytes": FILE_MAX_BITES,
             "backupCount": 3,
         },
     },

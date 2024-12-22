@@ -7,16 +7,25 @@ import typing as t
 from . import (
     InitError,
     InitKwargs,
+    PythonManager,
     culting_conf,
     logger,
 )
 from .commands import (
     Git,
+    Py,
+    Pyenv,
     Python,
+    Uv,
 )
 
 
 
+python_managers_map: dict[PythonManager, type[Pyenv | Py | Uv]] = {
+    "pyenv": Pyenv,
+    "py": Py,
+    "uv": Uv,
+}
 class Init:
     """Project init."""
 
@@ -52,6 +61,20 @@ class Init:
         return name
 
     def _set_sys_python(self) -> Python:
+        _python_version = self.kwargs.get("python_version")
+        for p in culting_conf.python.managers_priority:
+            python_manager_mapped = python_managers_map.get(p)
+            if python_manager_mapped is None:
+                continue
+            python_manager = python_manager_mapped()
+            python_full_path = python_manager.get_full_path(python_version=_python_version)
+            if python_full_path is None:
+                continue
+            logger.info(p)
+            logger.info(python_manager.get_full_path(python_version=_python_version))
+
+        # logger.info(_python_version)
+        # logger.info(culting_conf.python.managers_priority)
         # pyenv = self.kwargs["pyenv"]
         # if pyenv is not None:
         #     ...
