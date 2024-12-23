@@ -9,7 +9,7 @@ from ._logger import (
 )
 from ._typing import (
     InitKwargs,
-    PythonManager,
+    SupportedOs,
 )
 from ._vars import (
     __os__,
@@ -27,7 +27,7 @@ __all__: list[str] = [
     "CommandNotFoundError",
     "InitError",
     "InitKwargs",
-    "PythonManager",
+    "SupportedOs",
     "__os__",
     "__version__",
     "__xdg_config_home__",

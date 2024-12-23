@@ -17,7 +17,6 @@ from .commands import (
     Py,
     Pyenv,
     Python,
-    Uv,
 )
 
 
@@ -85,7 +84,6 @@ class MutuallyExclusiveOption(click.Option):
 
 @click.group(
     context_settings={"help_option_names": ["-h", "--help"]},
-    # invoke_without_command=True,
 )
 @click.version_option(__version__, "-V", "--version")
 def cli() -> None:
@@ -94,23 +92,26 @@ def cli() -> None:
 
 
 
-py_default_ver = Python().version
-pyenv_vers = Pyenv().versions
-py_vers = Py().versions
-uv_vers = Uv().versions
-choice_vers = sorted(
-    {py_default_ver, *pyenv_vers, *py_vers, *uv_vers},
-    key=lambda v: int(v.split(".")[1]),
-)
-help_name = "Set the package name, defaults to the directory name. Must be PEP 8 and PEP 423 compliant."
+# py_default_ver = Python().version
+# pyenv_vers = Pyenv().versions
+# py_vers = Py().versions
+# # uv_vers = Uv().versions
+# choice_vers = sorted(
+#     {py_default_ver, *pyenv_vers, *py_vers},
+#     key=lambda v: int(v.split(".")[1]),
+# )
 
 @cli.command()
 @click.argument("path", type=click.Path(), default=".")
-@click.option("-n", "--name", required=False, help=help_name)
+@click.option(
+    "-n", "--name",
+    required=False,
+    help="Set the package name, defaults to the directory name. Must be PEP 8 and PEP 423 compliant.",
+)
 @click.option(
     "-p", "--python-version",
-    type=click.Choice(choice_vers),
-    default=py_default_ver,
+    # type=click.Choice(choice_vers),
+    # default=py_default_ver,
     show_default=True,
     help="Specify a python version",
 )
@@ -144,9 +145,10 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
 @cli.command()
 def review() -> None:
     """Review project settings."""
-    logger.info(Pyenv().versions)
-    logger.info(Uv().versions)
-    logger.info(Py().versions)
+    from . import SupportedOs
+    logger.info(", ".join(f"'{o}'" for o in t.get_args(SupportedOs)))
+    # logger.info(Pyenv().versions)
+    # logger.info(Py().versions)
 
 
 
