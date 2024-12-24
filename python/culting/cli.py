@@ -5,6 +5,8 @@ import sys
 import typing as t
 
 import rich_click as click
+from rich_click.rich_context import RichContext
+from rich_click.rich_help_formatter import RichHelpFormatter
 
 from . import (
     CommandNotFoundError,
@@ -28,30 +30,17 @@ except CommandNotFoundError as err:
     logger.exception(err)
     sys.exit(1)
 
-click.rich_click.OPTION_GROUPS = {
-    "culting": [
-        {
-            "name": "Advanced Options",
-            "options": ["--help", "--version"],
-        },
-    ],
-    # "culting review": [],
-    "culting init": [
-        {
-            "name": "Basic usage",
-            "options": ["--name"],
-        },
-        {
-            "name": "Developers Corner",
-            "options": ["--python-version", "--venv", "--src"],
-        },
-        {
-            "name": "Advanced Options",
-            "options": ["--help"],
-        },
-    ],
-
-}
+# pyenv_vers = Pyenv().versions
+py_vers = Py().versions
+# # # uv_vers = Uv().versions
+choice_vers = sorted(
+    {
+        py_default_ver,
+        # *pyenv_vers,
+        *py_vers,
+    },
+    # key=lambda v: int(v.split(".")[1]),
+)
 
 
 class MutuallyExclusiveOption(click.Option):
@@ -89,6 +78,34 @@ class MutuallyExclusiveOption(click.Option):
 
 
 
+
+
+click.rich_click.OPTION_GROUPS = {
+    "culting": [
+        {
+            "name": "Advanced Options",
+            "options": ["--help", "--version"],
+        },
+    ],
+    # "culting review": [],
+    "culting init": [
+        {
+            "name": "Basic usage",
+            "options": ["--name"],
+        },
+        {
+            "name": "Developers Corner",
+            "options": ["--python-version", "--venv", "--src"],
+        },
+        {
+            "name": "Advanced Options",
+            "options": ["--help"],
+        },
+    ],
+
+}
+
+
 @click.group(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
@@ -98,13 +115,20 @@ def cli() -> None:
 
 
 
-# pyenv_vers = Pyenv().versions
-# py_vers = Py().versions
-# # uv_vers = Uv().versions
-# choice_vers = sorted(
-#     {py_default_ver, *pyenv_vers, *py_vers},
-#     key=lambda v: int(v.split(".")[1]),
-# )
+
+class CommandWarning(click.RichCommand):
+    """Click command with warning option for help."""
+
+    def format_help(
+        self,
+        ctx: RichContext,
+        formatter: RichHelpFormatter,
+        warning_msg: str | None = None,
+    ) -> None:
+        """Customize format help with option for warning."""
+        if warning_msg is not None:
+            logger.warning(warning_msg)
+        return super().format_help(ctx, formatter)
 
 @cli.command()
 @click.argument("path", type=click.Path(), default=".")
@@ -115,7 +139,7 @@ def cli() -> None:
 )
 @click.option(
     "-p", "--python-version",
-    # type=click.Choice(choice_vers),
+    type=click.Choice(choice_vers),
     default=py_default_ver,
     show_default=True,
     help="Specify a python version",
@@ -147,6 +171,8 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
         ctx.abort()
 
 
+
+# @cli.command(cls=CommandWarning)
 @cli.command()
 def review() -> None:
     """Review project settings."""

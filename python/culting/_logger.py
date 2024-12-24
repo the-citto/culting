@@ -38,10 +38,10 @@ class ColorFormatter(logging.Formatter):
             err_class = record.exc_info[0]
             if err_class is not None:
                 err_name = click.style(err_class.__name__, fg="red")
-                return f"{err_name}: {msg}"
+                return f" {err_name}: {msg}"
         if level in self.colors:
             prefix = click.style(level, **self.colors[level])
-            return f"{prefix}: {msg}"
+            return f" {prefix}: {msg}"
         return msg
 
 

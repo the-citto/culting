@@ -98,29 +98,33 @@ class Python(Command):
     @property
     def version(self) -> str:
         """Version."""
-        version_output = self.execute(["--version"])
+        version_output = self.execute(["-VV"])
         version_re = re.search(r"(3\.\d+)", version_output)
         if version_re is None:
             err_msg = "Python version not found"
             raise CommandNotFoundError(err_msg)
-        return version_re.group()
+        _version = version_re.group(1)
+        free_thread_re = re.search("free-threading", version_output)
+        if free_thread_re is not None:
+            _version += "t"
+        return _version
 
 
 
 class PythonManager(Command, abc.ABC):
     """Python manager."""
 
-    # def __init__(self) -> None:
-    #     """Init."""
-    #     try:
-    #         super().__init__()
-    #     except CommandNotFoundError:
-    #         self.binary = None
-    #
-    # @property
-    # @abc.abstractmethod
-    # def versions(self) -> list[str]:
-    #     """Available versions."""
+    def __init__(self) -> None:
+        """Init."""
+        try:
+            super().__init__()
+        except CommandNotFoundError:
+            self.binary = None
+
+    @property
+    @abc.abstractmethod
+    def versions(self) -> list[str]:
+        """Available versions."""
     #     # if self.binary is None:
     #     #     return []
     #     # versions_output = self.execute(self.versions_command)
@@ -149,11 +153,12 @@ class Pyenv(PythonManager):
         """Binary name or fully qualified path."""
         if __os__ == "linux":
             return "pyenv"
-        if __os__ == "win32":
-            return "pyenv.bat"
-        supported_os = ", ".join(f"'{o}'" for o in t.get_args(SupportedOs))
-        err_msg = f"Supported [{supported_os}]"
-        raise NotImplementedError(err_msg)
+        return ""
+        # if __os__ == "win32":
+        #     return "pyenv.bat"
+        # supported_os = ", ".join(f"'{o}'" for o in t.get_args(SupportedOs))
+        # err_msg = f"Supported [{supported_os}]"
+        # raise NotImplementedError(err_msg)
 
     # @property
     # def binary_name(self) -> str:
@@ -188,7 +193,21 @@ class Py(PythonManager):
     @property
     def default_binary(self) -> str:
         """Binary name or fully qualified path."""
-        return "py.exe"
+        if __os__ == "win32":
+            return "py.exe"
+        return ""
+
+    @property
+    def versions(self) -> list[str]:
+        """Available versions."""
+        if self.binary is None:
+            return []
+        versions_output = self.execute(["--list-paths"])
+        return re.findall(r"(3\.\d+t*)", versions_output)
+        # return sorted(
+        #     set(versions),
+        #     key=lambda v: int(v.split(".")[1]),
+        # )
 
     # @property
     # def binary_name(self) -> str:
