@@ -92,7 +92,7 @@ def cli() -> None:
 
 
 
-# py_default_ver = Python().version
+py_default_ver = Python().version
 # pyenv_vers = Pyenv().versions
 # py_vers = Py().versions
 # # uv_vers = Uv().versions
@@ -111,7 +111,7 @@ def cli() -> None:
 @click.option(
     "-p", "--python-version",
     # type=click.Choice(choice_vers),
-    # default=py_default_ver,
+    default=py_default_ver,
     show_default=True,
     help="Specify a python version",
 )
@@ -147,9 +147,9 @@ def review() -> None:
     """Review project settings."""
     # from . import SupportedOs
     # logger.info(", ".join(f"'{o}'" for o in t.get_args(SupportedOs)))
+    # logger.info(Python().version)
     # logger.info(Pyenv().versions)
     # logger.info(Py().versions)
-    logger.info(Python().version)
 
 
 
