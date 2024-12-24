@@ -10,8 +10,6 @@ click==8.1.7
     # via
     #   -r requirements/requirements.in
     #   rich-click
-colorama==0.4.6
-    # via click
 dnspython==2.7.0
     # via email-validator
 email-validator==2.2.0
