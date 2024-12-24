@@ -33,8 +33,7 @@ class Command(abc.ABC):
         _binary = binary_path if binary_path is not None else self.default_binary
         self.binary = shutil.which(_binary)
         if self.binary is None:
-            err_msg = " ".join(_binary)
-            raise CommandNotFoundError(err_msg)
+            raise CommandNotFoundError(_binary)
 
     @property
     @abc.abstractmethod
@@ -65,6 +64,8 @@ class Python(Command):
         if __os__ == "linux":
             return "python"
         if __os__ == "win32":
+            if shutil.which("py.exe"):
+                return "py.exe"
             return "python.exe"
         raise NotImplementedError
 

@@ -34,12 +34,14 @@ class ColorFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         level = record.levelname.capitalize()
         msg = record.getMessage()
+        if record.exc_info is not None:
+            err_class = record.exc_info[0]
+            if err_class is not None:
+                err_name = click.style(err_class.__name__, fg="red")
+                return f"{err_name}: {msg}"
         if level in self.colors:
-            prefix = click.style(
-                level,
-                **self.colors[level],
-            )
-            msg = f"{prefix}: {msg}"
+            prefix = click.style(level, **self.colors[level])
+            return f"{prefix}: {msg}"
         return msg
 
 
@@ -66,8 +68,8 @@ class FileFormatter(logging.Formatter):
         message["created"] = dt.datetime.fromtimestamp(record.created, tz=dt.UTC).isoformat()
         if record.relativeCreated is not None:
             message["relativeCreated"] = dt.datetime.fromtimestamp(record.relativeCreated, tz=dt.UTC).isoformat()
-        if record.exc_info is not None:
-            message["exc_info"] = self.formatException(record.exc_info)
+        # if record.exc_info is not None:
+        #     message["exc_info"] = self.formatException(record.exc_info)
         if record.exc_info is not None:
             message["exc_info"] = self.formatException(record.exc_info)
         if record.stack_info is not None:

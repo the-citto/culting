@@ -1,6 +1,7 @@
 """CLI."""
 
 import subprocess
+import sys
 import typing as t
 
 import rich_click as click
@@ -20,6 +21,12 @@ from .commands import (
 )
 
 
+
+try:
+    py_default_ver = Python().version
+except CommandNotFoundError as err:
+    logger.exception(err)
+    sys.exit(1)
 
 click.rich_click.OPTION_GROUPS = {
     "culting": [
@@ -91,8 +98,6 @@ def cli() -> None:
 
 
 
-
-py_default_ver = Python().version
 # pyenv_vers = Pyenv().versions
 # py_vers = Py().versions
 # # uv_vers = Uv().versions
