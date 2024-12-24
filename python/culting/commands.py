@@ -93,16 +93,16 @@ class Python(Command):
     #             return _python_path_re.group(1)
     #     err_msg = "Python not found."
     #     raise CommandNotFoundError(err_msg)
-    #
-    # @property
-    # def version(self) -> str:
-    #     """Version."""
-    #     version_output = self.execute(["--version"])
-    #     version_re = re.search(r"(3\.\d+)", version_output)
-    #     if version_re is None:
-    #         err_msg = "Python version not found"
-    #         raise CommandNotFoundError(err_msg)
-    #     return version_re.group()
+
+    @property
+    def version(self) -> str:
+        """Version."""
+        version_output = self.execute(["--version"])
+        version_re = re.search(r"(3\.\d+)", version_output)
+        if version_re is None:
+            err_msg = "Python version not found"
+            raise CommandNotFoundError(err_msg)
+        return version_re.group()
 
 
 

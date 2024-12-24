@@ -145,10 +145,11 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
 @cli.command()
 def review() -> None:
     """Review project settings."""
-    from . import SupportedOs
-    logger.info(", ".join(f"'{o}'" for o in t.get_args(SupportedOs)))
+    # from . import SupportedOs
+    # logger.info(", ".join(f"'{o}'" for o in t.get_args(SupportedOs)))
     # logger.info(Pyenv().versions)
     # logger.info(Py().versions)
+    logger.info(Python().version)
 
 
 
