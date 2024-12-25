@@ -1,17 +1,18 @@
 """CLI."""
 
+import re
 import subprocess
-import sys
 import typing as t
 
 import rich_click as click
-from rich_click.rich_context import RichContext
+from rich_click import RichContext
 from rich_click.rich_help_formatter import RichHelpFormatter
 
 from . import (
     CommandNotFoundError,
     InitError,
     InitKwargs,
+    __os__,
     __version__,
     culting_conf,
     logger,
@@ -24,23 +25,41 @@ from .commands import (
 
 
 
-try:
-    py_default_ver = Python().version
-except CommandNotFoundError as err:
-    logger.exception(err)
-    sys.exit(1)
+def _python_versions() -> tuple[str | None, list[str]]:
+    try:
+        _python_path = culting_conf.python.path
+        _default_ver = Python(binary_path=_python_path or None).version
+    except CommandNotFoundError:
+        _default_ver = None
+    # pyenv_vers = Pyenv().versions
+    _py_vers = Py().versions
+    _choice_vers = {_default_ver, *_py_vers} if _default_ver is not None else {*_py_vers}
+    _sorted_choice_vers = sorted(
+        sorted(_choice_vers),
+        key=lambda v: (
+            int(re.search(r"3\.(\d+)", v).group(1)), # pyright: ignore reportOptionalMemberAccess
+        ),
+    )
+    return _default_ver, _sorted_choice_vers
 
-# pyenv_vers = Pyenv().versions
-py_vers = Py().versions
-# # # uv_vers = Uv().versions
-choice_vers = sorted(
-    {
-        py_default_ver,
-        # *pyenv_vers,
-        *py_vers,
-    },
-    # key=lambda v: int(v.split(".")[1]),
-)
+python_default_ver, python_choice_vers = _python_versions()
+
+
+
+class _CommandCustomHelp(click.RichCommand):
+
+    def format_help(self, ctx: RichContext, formatter: RichHelpFormatter) -> None:  # type: ignore[override]
+        if python_default_ver is None:
+            click.echo()
+            logger.warning("No default Python version found")
+        elif python_default_ver.endswith("t"):
+            click.echo()
+            logger.warning("The default Python version is a free-threading build")
+        self.format_usage(ctx, formatter)
+        self.format_help_text(ctx, formatter)
+        self.format_options(ctx, formatter)
+        self.format_epilog(ctx, formatter)
+
 
 
 class MutuallyExclusiveOption(click.Option):
@@ -54,7 +73,7 @@ class MutuallyExclusiveOption(click.Option):
             _mutually_exclusive = [f"--{e.replace('_', '-')}" for e in self.mutually_exclusive]
             ex_str = ", ".join(_mutually_exclusive)
             kwargs["help"] = _help + (
-                "\bNOTE: This argument is mutually exclusive with "
+                "\b\n\nNOTE: This argument is mutually exclusive with "
                 "arguments: [" + ex_str + "]."
             )
         super().__init__(*args, **kwargs)
@@ -78,8 +97,6 @@ class MutuallyExclusiveOption(click.Option):
 
 
 
-
-
 click.rich_click.OPTION_GROUPS = {
     "culting": [
         {
@@ -95,7 +112,7 @@ click.rich_click.OPTION_GROUPS = {
         },
         {
             "name": "Developers Corner",
-            "options": ["--python-version", "--venv", "--src"],
+            "options": ["--python-version", "--python-path", "--venv", "--src"],
         },
         {
             "name": "Advanced Options",
@@ -110,27 +127,14 @@ click.rich_click.OPTION_GROUPS = {
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 @click.version_option(__version__, "-V", "--version")
+# @click.pass_context
+# def cli(ctx: click.Context) -> None:
 def cli() -> None:
     """Culting, a Python projects' manager."""
 
 
 
-
-class CommandWarning(click.RichCommand):
-    """Click command with warning option for help."""
-
-    def format_help(
-        self,
-        ctx: RichContext,
-        formatter: RichHelpFormatter,
-        warning_msg: str | None = None,
-    ) -> None:
-        """Customize format help with option for warning."""
-        if warning_msg is not None:
-            logger.warning(warning_msg)
-        return super().format_help(ctx, formatter)
-
-@cli.command()
+@cli.command(cls=_CommandCustomHelp)
 @click.argument("path", type=click.Path(), default=".")
 @click.option(
     "-n", "--name",
@@ -138,11 +142,23 @@ class CommandWarning(click.RichCommand):
     help="Set the package name, defaults to the directory name. Must be PEP 8 and PEP 423 compliant.",
 )
 @click.option(
-    "-p", "--python-version",
-    type=click.Choice(choice_vers),
-    default=py_default_ver,
+    "-v", "--python-version",
+    cls=MutuallyExclusiveOption,
+    mutually_exclusive=["python_path"],
+    type=click.Choice(python_choice_vers),
+    # default=f"{python_default_ver}",
+    default=python_default_ver,
     show_default=True,
     help="Specify a python version",
+)
+@click.option(
+    "-p", "--python-path",
+    cls=MutuallyExclusiveOption,
+    mutually_exclusive=["python_version"],
+    type=click.Path(),
+    default=culting_conf.python.path,
+    show_default=True,
+    help="Specify path to a python binary",
 )
 @click.option(
     "--venv",
@@ -159,16 +175,39 @@ class CommandWarning(click.RichCommand):
 @click.pass_context
 def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
     """Init project."""
-    from .init import Init
-    try:
-        Init(**kwargs)
-    except (
-        InitError,
-        subprocess.CalledProcessError,
-        CommandNotFoundError,
-    ) as err:
-        logger.error(err)
-        ctx.abort()
+    print(kwargs)
+    if kwargs.get("python_version") is None and not kwargs.get("python_path"):
+        err_msg = "no default python binary found, and none specified"
+        logger.debug(err_msg)
+        raise click.UsageError(err_msg)
+    _python_version = kwargs.get("python_version")
+    if _python_version != python_default_ver:
+        try:
+            if __os__ == "win32":
+                kwargs["python_path"] = Py().get_version_path(version=_python_version)
+        except CommandNotFoundError as err:
+            logger.error(err)
+            ctx.abort()
+
+    # try:
+    #     _python_path = culting_conf.python.path
+    #     _default_ver = Python(binary_path=_python_path or None).version
+    # except CommandNotFoundError:
+    #     _default_ver = None
+
+    # print(kwargs)
+    # print(f"{kwargs.get('python_path') == culting_conf.python.path = }")
+    # print(f"{kwargs.get('python_version') == python_default_ver = }")
+    # from .init import Init
+    # try:
+    #     Init(**kwargs)
+    # except (
+    #     InitError,
+    #     subprocess.CalledProcessError,
+    #     CommandNotFoundError,
+    # ) as err:
+    #     logger.error(err)
+    #     ctx.abort()
 
 
 

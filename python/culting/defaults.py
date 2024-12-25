@@ -1,16 +1,21 @@
 """Defaults."""
 
+import pathlib
+import sys
+
 import pydantic
 import tomlkit as toml
+from pydantic_core import PydanticCustomError
 
 from . import (
     __xdg_config_home__,
+    logger,
 )
 
 
 
-conf_default_path = __xdg_config_home__ / "culting-default.toml"
-conf_custom_path = __xdg_config_home__ / "culting.toml"
+conf_default_path = __xdg_config_home__ / "default.toml"
+conf_custom_path = __xdg_config_home__ / "custom.toml"
 
 
 
@@ -36,19 +41,14 @@ class PackageConf(pydantic.BaseModel):
 class PythonConf(pydantic.BaseModel):
     """Python config."""
 
-    # managers_priority: t.Sequence[PythonManager] = ["pyenv", "py", "uv"]
-    #
-    # @pydantic.field_validator("managers_priority", mode="before")
-    # @classmethod
-    # def _validate_managers_priority(
-    #     cls,
-    #     managers_priority: tuple[PythonManager, ...],
-    # ) -> tuple[PythonManager, ...]:
-    #     if len(managers_priority) != len(set(managers_priority)):
-    #         err_msg = f"Only unique entries allowd [{', '.join(managers_priority)}]"
-    #         raise ValueError(err_msg)
-    #     return managers_priority
+    path: str = ""
 
+    @pydantic.field_validator("path")
+    @classmethod
+    def _valid_path(cls, path: str) -> str:
+        if path and not pathlib.Path(path).is_file():
+            raise ValueError
+        return path
 
 
 class CultingConf(pydantic.BaseModel):
@@ -66,12 +66,15 @@ with conf_default_path.open("w") as file:
     toml.dump(CultingConf().model_dump(), file, sort_keys=True)
 
 
-if conf_custom_path.is_file():
-    with conf_custom_path.open("r") as file:
-        toml_value = toml.load(file).value
-        culting_conf = CultingConf(**toml_value)
-else:
-    culting_conf = CultingConf()
-
+try:
+    if conf_custom_path.is_file():
+        with conf_custom_path.open("r") as file:
+            toml_value = toml.load(file).value
+            culting_conf = CultingConf(**toml_value)
+    else:
+        culting_conf = CultingConf()
+except pydantic.ValidationError as err:
+    logger.exception(err)
+    sys.exit(1)
 
 

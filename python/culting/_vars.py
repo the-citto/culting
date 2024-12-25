@@ -29,8 +29,8 @@ if __os__ == "linux":
     _xdg_config_home = ".config"
     _xdg_state_home = ".local/state"
 elif __os__ == "win32":
-    _xdg_state_home = "AppData"
-    _xdg_config_home = "AppData/Temp"
+    _xdg_config_home = "AppData"
+    _xdg_state_home = "AppData/Temp"
 else:
     err_msg = f"OS '{__os__}'"
     raise NotImplementedError(err_msg)
