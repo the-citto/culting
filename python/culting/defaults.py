@@ -35,7 +35,7 @@ class PackageConf(pydantic.BaseModel):
     """Package config."""
 
     venv: str = ".venv"
-    src: str = "python"
+    src: str = "src"
 
 
 class PythonConf(pydantic.BaseModel):
