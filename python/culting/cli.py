@@ -10,6 +10,7 @@ from rich_click.rich_help_formatter import RichHelpFormatter
 
 from . import (
     CommandNotFoundError,
+    InitError,
     InitKwargs,
     __os__,
     __version__,
@@ -41,9 +42,7 @@ def _python_versions() -> tuple[str | None, str | None, list[str]]:
     _choice_vers = {_default_ver, *_py_vers, *_pyenv_vers} if _default_ver is not None else {*_py_vers, *_pyenv_vers}
     _sorted_choice_vers = sorted(
         sorted(_choice_vers),
-        key=lambda v: (
-            int(re.search(r"3\.(\d+)", v).group(1)), # pyright: ignore reportOptionalMemberAccess
-        ),
+        key=lambda v: int(re.search(r"3\.(\d+)", v).group(1)), # pyright: ignore reportOptionalMemberAccess
     )
     return _default_ver, _default_path, _sorted_choice_vers
 
@@ -200,36 +199,24 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
         logger.debug(err_msg)
         raise click.UsageError(err_msg)
     _python_version = kwargs.get("python_version")
-    if _python_version != python_default_ver:
-        try:
-            if __os__ == "linux":
-                kwargs["python_path"] = Pyenv().get_version_path(version=_python_version)
-            elif __os__ == "win32":
-                kwargs["python_path"] = Py().get_version_path(version=_python_version)
-        except CommandNotFoundError as err:
-            logger.error(err)
-            ctx.abort()
+    try:
+        if __os__ == "linux":
+            kwargs["python_path"] = Pyenv().get_version_path(version=_python_version)
+        elif __os__ == "win32":
+            kwargs["python_path"] = Py().get_version_path(version=_python_version)
+    except CommandNotFoundError as err:
+        logger.error(err)
+        ctx.abort()
     logger.debug(kwargs)
-
-    # try:
-    #     _python_path = culting_conf.python.path
-    #     _default_ver = Python(binary_path=_python_path or None).version
-    # except CommandNotFoundError:
-    #     _default_ver = None
-
-    # print(kwargs)
-    # print(f"{kwargs.get('python_path') == culting_conf.python.path = }")
-    # print(f"{kwargs.get('python_version') == python_default_ver = }")
-    # from .init import Init
-    # try:
-    #     Init(**kwargs)
-    # except (
-    #     InitError,
-    #     subprocess.CalledProcessError,
-    #     CommandNotFoundError,
-    # ) as err:
-    #     logger.error(err)
-    #     ctx.abort()
+    from .init import Init
+    try:
+        Init(**kwargs)
+    except (
+        InitError,
+        CommandNotFoundError,
+    ) as err:
+        logger.error(err)
+        ctx.abort()
 
 
 

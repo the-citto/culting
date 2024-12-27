@@ -7,23 +7,15 @@ import typing as t
 from . import (
     InitError,
     InitKwargs,
-    culting_conf,
+    __os__,
     logger,
 )
 from .commands import (
     Git,
-    Py,
-    Pyenv,
     Python,
 )
 
 
-
-# python_managers_map: dict[PythonManager, type[Pyenv | Py | Uv]] = {
-#     "pyenv": Pyenv,
-#     "py": Py,
-#     "uv": Uv,
-# }
 
 class Init:
     """Project init."""
@@ -31,11 +23,11 @@ class Init:
     def __init__(self, **kwargs: t.Unpack[InitKwargs]) -> None:
         """Init."""
         self.kwargs = kwargs
-        # self._verify_empty()
-        # self.name = self._set_name()
-        # self.git = Git()
-        # self.git.init(proj_path=self.proj_path)
-        # self.sys_python = self._set_sys_python()
+        self._verify_empty()
+        self.name = self._set_name()
+        self.git = Git()
+        self._init_git()
+        self._create_venv()
         # self._set_package_files()
 
     def _verify_empty(self) -> None:
@@ -45,6 +37,7 @@ class Init:
         if any(self.proj_path.iterdir()):
             err_msg = f"{self.proj_path} is not empty"
             raise InitError(err_msg)
+        logger.debug(f"'{self.proj_path}' is empty")
 
     def _set_name(self) -> str:
         name = self.kwargs["name"]
@@ -58,6 +51,25 @@ class Init:
             logger.warning(f"Name '{name}' with leading underscore should be for special use")
         logger.info(f"Initializing package '{name}'")
         return name
+
+    def _init_git(self) -> None:
+        logger.info(f"Initializing Git repository in '{self.proj_path}'")
+        self.git.init(proj_path=self.proj_path)
+
+    def _create_venv(self) -> None:
+        _sys_python = Python(binary_path=self.kwargs.get("python_path"))
+        _venv_name = self.kwargs.get("venv")
+        _venv_path = self.proj_path / _venv_name
+        logger.info(f"Creating '{_venv_name}'")
+        _ = _sys_python.execute(["-m", "venv", _venv_path])
+        if __os__ == "linux":
+            _venv_python_path = _venv_path / "bin/python"
+        elif __os__ == "win32":
+            _venv_python_path = _venv_path / "Script/python.exe"
+        else:
+            raise InitError
+        self.python = Python(binary_path=str(_venv_python_path))
+        logger.debug(f"venv python: '{self.python.binary}'")
 
     # def _set_sys_python(self) -> Python:
     #     _python_version = self.kwargs.get("python_version")

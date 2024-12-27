@@ -81,6 +81,21 @@ class Python(Command):
         return _version
 
 
+class Git(Command):
+    """Git."""
+
+    @property
+    def default_binary(self) -> str:
+        """Binary name or fully qualified path."""
+        return "git"
+
+    def init(self, proj_path: pathlib.Path) -> None:
+        """Init repo."""
+        command = ["init", proj_path]
+        _ = self.execute(command=command)
+
+
+
 class PythonManager(Command, abc.ABC):
     """Python manager."""
 
@@ -191,30 +206,6 @@ class Py(PythonManager):
 #             return None
 #         err_msg = "UV not implemented yet."
 #         raise NotImplementedError(err_msg)
-
-
-
-class Git(Command):
-    """Git."""
-
-    @property
-    def default_binary(self) -> str:
-        """Binary name or fully qualified path."""
-        raise NotImplementedError
-
-    # @property
-    # def binary_name(self) -> str:
-    #     """Git binary."""
-    #     return "git"
-    #
-    # def init(self, proj_path: pathlib.Path) -> None:
-    #     """Init repo."""
-    #     if (proj_path / ".git").is_dir():
-    #         logger.warning(f"'{proj_path.name}' is already a Git repository")
-    #         return
-    #     command = ["init", proj_path]
-    #     logger.info(f"Git repository initialized in '{proj_path.name}'")
-    #     _ = self.execute(command=command)
 
 
 
