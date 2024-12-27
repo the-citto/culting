@@ -32,7 +32,8 @@ class Command(abc.ABC):
         _binary = binary_path if binary_path is not None else self.default_binary
         self.binary = shutil.which(_binary)
         if self.binary is None:
-            raise CommandNotFoundError(_binary)
+            err_msg = f"Not found '{_binary}'"
+            raise CommandNotFoundError(err_msg)
 
     @property
     @abc.abstractmethod
