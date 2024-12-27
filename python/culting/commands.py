@@ -87,7 +87,11 @@ class Git(Command):
     @property
     def default_binary(self) -> str:
         """Binary name or fully qualified path."""
-        return "git"
+        if __os__ == "linux":
+            return "git"
+        if __os__ == "win32":
+            return "git.exe"
+        raise NotImplementedError
 
     def init(self, proj_path: pathlib.Path) -> None:
         """Init repo."""
