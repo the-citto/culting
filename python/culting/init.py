@@ -65,7 +65,7 @@ class Init:
         if __os__ == "linux":
             _venv_python_path = _venv_path / "bin/python"
         elif __os__ == "win32":
-            _venv_python_path = _venv_path / "Script/python.exe"
+            _venv_python_path = _venv_path / "Scripts/python.exe"
         else:
             raise InitError
         self.python = Python(binary_path=str(_venv_python_path))
