@@ -1,7 +1,7 @@
 """CLI."""
 
+import logging
 import re
-import subprocess
 import typing as t
 
 import rich_click as click
@@ -10,7 +10,6 @@ from rich_click.rich_help_formatter import RichHelpFormatter
 
 from . import (
     CommandNotFoundError,
-    InitError,
     InitKwargs,
     __os__,
     __version__,
@@ -25,24 +24,30 @@ from .commands import (
 
 
 
-def _python_versions() -> tuple[str | None, list[str]]:
+def _python_versions() -> tuple[str | None, str | None, list[str]]:
     try:
-        _python_path = culting_conf.python.path
-        _default_ver = Python(binary_path=_python_path or None).version
+        if culting_conf.python.path:
+            _default_path = culting_conf.python.path
+            _default_ver = Python(binary_path=_default_path).version
+        else:
+            _python = Python()
+            _default_path = _python.binary
+            _default_ver = _python.version
     except CommandNotFoundError:
         _default_ver = None
-    # pyenv_vers = Pyenv().versions
+        _default_path = None
+    _pyenv_vers = Pyenv().versions
     _py_vers = Py().versions
-    _choice_vers = {_default_ver, *_py_vers} if _default_ver is not None else {*_py_vers}
+    _choice_vers = {_default_ver, *_py_vers, *_pyenv_vers} if _default_ver is not None else {*_py_vers, *_pyenv_vers}
     _sorted_choice_vers = sorted(
         sorted(_choice_vers),
         key=lambda v: (
             int(re.search(r"3\.(\d+)", v).group(1)), # pyright: ignore reportOptionalMemberAccess
         ),
     )
-    return _default_ver, _sorted_choice_vers
+    return _default_ver, _default_path, _sorted_choice_vers
 
-python_default_ver, python_choice_vers = _python_versions()
+python_default_ver, python_default_path, python_choice_vers = _python_versions()
 
 
 
@@ -101,10 +106,9 @@ click.rich_click.OPTION_GROUPS = {
     "culting": [
         {
             "name": "Advanced Options",
-            "options": ["--help", "--version"],
+            "options": ["--debug", "--help", "--version"],
         },
     ],
-    # "culting review": [],
     "culting init": [
         {
             "name": "Basic usage",
@@ -112,7 +116,13 @@ click.rich_click.OPTION_GROUPS = {
         },
         {
             "name": "Developers Corner",
-            "options": ["--python-version", "--python-path", "--venv", "--src"],
+            "options": [
+                "--python-version",
+                "--python-path",
+                # "--wsl",
+                "--venv",
+                "--src",
+            ],
         },
         {
             "name": "Advanced Options",
@@ -124,13 +134,25 @@ click.rich_click.OPTION_GROUPS = {
 
 
 @click.group(
-    context_settings={"help_option_names": ["-h", "--help"]},
+    context_settings={
+        "help_option_names": ["-h", "--help"],
+        "show_default": True,
+    },
 )
 @click.version_option(__version__, "-V", "--version")
-# @click.pass_context
-# def cli(ctx: click.Context) -> None:
-def cli() -> None:
+@click.option(
+    "-d", "--debug",
+    is_flag=True,
+    help="Show debug messages.",
+)
+def cli(*, debug: bool) -> None:
     """Culting, a Python projects' manager."""
+    if debug:
+        stderr_handler = logging.getHandlerByName("stderr")
+        if stderr_handler is not None:
+            stderr_handler.setLevel(logging.DEBUG)
+            click.echo()
+            logger.debug("On.")
 
 
 
@@ -146,9 +168,8 @@ def cli() -> None:
     cls=MutuallyExclusiveOption,
     mutually_exclusive=["python_path"],
     type=click.Choice(python_choice_vers),
-    # default=f"{python_default_ver}",
     default=python_default_ver,
-    show_default=True,
+    show_default="None" if python_default_ver is None else True,
     help="Specify a python version",
 )
 @click.option(
@@ -156,26 +177,24 @@ def cli() -> None:
     cls=MutuallyExclusiveOption,
     mutually_exclusive=["python_version"],
     type=click.Path(),
-    default=culting_conf.python.path,
-    show_default=True,
+    default=python_default_path,
+    show_default="None" if python_default_path is None else True,
     help="Specify path to a python binary",
 )
 @click.option(
     "--venv",
     default=culting_conf.package.venv,
-    show_default=True,
     help="Specify venv name.",
 )
 @click.option(
     "--src",
     default=culting_conf.package.src,
-    show_default=True,
     help="Specify src folder name.",
 )
 @click.pass_context
 def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
     """Init project."""
-    print(kwargs)
+    logger.debug(kwargs)
     if kwargs.get("python_version") is None and not kwargs.get("python_path"):
         err_msg = "no default python binary found, and none specified"
         logger.debug(err_msg)
@@ -183,11 +202,14 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
     _python_version = kwargs.get("python_version")
     if _python_version != python_default_ver:
         try:
-            if __os__ == "win32":
+            if __os__ == "linux":
+                kwargs["python_path"] = Pyenv().get_version_path(version=_python_version)
+            elif __os__ == "win32":
                 kwargs["python_path"] = Py().get_version_path(version=_python_version)
         except CommandNotFoundError as err:
             logger.error(err)
             ctx.abort()
+    logger.debug(kwargs)
 
     # try:
     #     _python_path = culting_conf.python.path

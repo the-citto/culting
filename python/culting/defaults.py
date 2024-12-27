@@ -1,14 +1,15 @@
 """Defaults."""
 
-import pathlib
+import re
 import sys
 
 import pydantic
 import tomlkit as toml
-from pydantic_core import PydanticCustomError
 
 from . import (
+    __os__,
     __xdg_config_home__,
+    commands,
     logger,
 )
 
@@ -37,18 +38,36 @@ class PackageConf(pydantic.BaseModel):
     venv: str = ".venv"
     src: str = "src"
 
+    @pydantic.field_validator("venv", "src")
+    @classmethod
+    def _valid_len(cls, field: str) -> str:
+        min_len = 3
+        if len(field) < min_len:
+            err_msg = f"Parameter '{field}' is too short, at least {min_len} characters"
+            raise ValueError(err_msg)
+        return field
+
 
 class PythonConf(pydantic.BaseModel):
     """Python config."""
 
     path: str = ""
 
-    @pydantic.field_validator("path")
-    @classmethod
-    def _valid_path(cls, path: str) -> str:
-        if path and not pathlib.Path(path).is_file():
-            raise ValueError
-        return path
+    # @pydantic.field_validator("path")
+    # @classmethod
+    # def _valid_path(cls, path: str) -> str:
+    #     if path and not pathlib.Path(path).is_file():
+    #         err_msg = f"'{path}' not found."
+    #         raise ValueError(err_msg)
+    #     if path:
+    #         _stdout_version = commands.Python(binary_path=path).execute(["-VV"])
+    #         logger.debug(_stdout_version)
+    #     if __os__ == "linux":
+    #         ...
+    #         # commands.Pyenv(binary_path=path)
+    #     elif __os__ == "win32":
+    #         ...
+    #     return path
 
 
 class CultingConf(pydantic.BaseModel):

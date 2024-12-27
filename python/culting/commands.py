@@ -10,6 +10,7 @@ Click reference:
 """
 
 import abc
+import os
 import pathlib
 import re
 import shutil
@@ -18,10 +19,7 @@ import typing as t
 
 from . import (
     CommandNotFoundError,
-    SupportedOs,
     __os__,
-    culting_conf,
-    logger,
 )
 
 
@@ -62,8 +60,6 @@ class Python(Command):
     @property
     def default_binary(self) -> str:
         """Binary name or fully qualified path."""
-        if culting_conf.python.path:
-            return culting_conf.python.path
         if __os__ == "linux":
             return "python"
         if __os__ == "win32":
@@ -114,15 +110,20 @@ class Pyenv(PythonManager):
         if __os__ == "linux":
             return "pyenv"
         return ""
-        # if __os__ == "win32":
-        #     return "pyenv.bat"
-        # supported_os = ", ".join(f"'{o}'" for o in t.get_args(SupportedOs))
-        # err_msg = f"Supported [{supported_os}]"
-        # raise NotImplementedError(err_msg)
+
+    @property
+    def versions(self) -> list[str]:
+        """Available versions."""
+        if self.binary is None:
+            return []
+        _versions_output = self.execute(["versions"])
+        _pyenv_versions = re.findall(r"(3\.\d+)\.\d+(t*)", _versions_output)
+        return [f"{v[0]}{v[1]}" for v in _pyenv_versions]
 
     def get_version_path(self, version: str) -> str:
         """Get version path."""
-        raise NotImplementedError
+        os.environ["PYENV_VERSION"] = version
+        return self.execute(["which", f"python{version}"])
 
 
 class Py(PythonManager):
@@ -140,16 +141,21 @@ class Py(PythonManager):
         """Available versions."""
         if self.binary is None:
             return []
-        versions_output = self.execute(["--list-paths"])
-        return re.findall(r"(3\.\d+t*)", versions_output)
+        _versions_output = self.execute(["--list-paths"])
+        return re.findall(r"(3\.\d+t*)", _versions_output)
 
     def get_version_path(self, version: str) -> str:
         """Get version path."""
-        versions_output = self.execute(["--list-paths"])
-        version_path_re = re.search(r"-V:" + re.escape(version) + r"[ *]+(.+exe)", versions_output)
-        if version_path_re is None:
-            raise CommandNotFoundError
-        return version_path_re.group(1)
+        # versions_output = self.execute(["--list-paths"])
+        # version_path_re = re.search(r"-V:" + re.escape(version) + r"[ *]+(.+exe)", versions_output)
+        # if version_path_re is None:
+        #     raise CommandNotFoundError
+        # return version_path_re.group(1)
+        _version_help = self.execute([f"-{version}", "--help"])
+        _version_re = re.search(r"usage: (.+exe)", _version_help)
+        if _version_re is None:
+            raise ValueError
+        return _version_re.group(1)
 
 
 
