@@ -1,11 +1,9 @@
 """Test CLI."""
-# pyright: reportMissingImports=false
 
 from click.testing import CliRunner
 
-from culting import __version__
 from culting.cli import cli
-
+from culting.variables import __version__
 
 
 def test_version() -> None:

@@ -9,19 +9,27 @@ Click reference:
     https://click.palletsprojects.com/en/stable/advanced/#forwarding-unknown-options
 """
 
+# ruff: noqa: S310
+
 import abc
+import datetime as dt
 import os
 import pathlib
 import re
 import shutil
 import subprocess
 import typing as t
+import urllib.request
 
-from . import (
+from .exceptions import (
     CommandNotFoundError,
+)
+from .types import (
+    LicenseFile,
+)
+from .variables import (
     __os__,
 )
-
 
 
 class Command(abc.ABC):
@@ -53,6 +61,50 @@ class Command(abc.ABC):
             err_msg = stderr.decode("utf-8")
             raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, command)), output=err_msg)
         return stdout.decode("utf-8").rstrip()
+
+    def run(self, command: list[str]) -> None:
+        """Run."""
+        if self.binary is None:
+            raise CommandNotFoundError
+        subprocess.run([self.binary, *command], check=True)
+
+
+class PipCompile(Command):
+    """Pip-compile."""
+
+    @property
+    def default_binary(self) -> str:
+        """Binary name or fully qualified path."""
+        raise NotImplementedError
+
+
+class Wget:
+    """Wget urllib."""
+
+    def __init__(self) -> None:
+        """Init."""
+
+    def license(
+        self,
+        license_template: LicenseFile,
+        license_path: pathlib.Path,
+        user_name: str,
+    ) -> None:
+        """Get license."""
+        _license_url = f"https://github.com/licenses/license-templates/raw/refs/heads/master/templates/{license_template}.txt"
+        with urllib.request.urlopen(_license_url) as response:
+            _license_txt = response.read().decode()
+            _license_txt = _license_txt.replace("{{ year }}", str(dt.datetime.now(tz=dt.UTC).year))
+            _license_txt = _license_txt.replace("{{ organization }}", user_name)
+            license_path.write_text(_license_txt)
+
+    def gitignore(self, proj_path: pathlib.Path) -> None:
+        """Get .gitignore."""
+        _gitignore_url = "https://github.com/github/gitignore/raw/refs/heads/main/Python.gitignore"
+        _gitignore_target = proj_path / ".gitignore"
+        with urllib.request.urlopen(_gitignore_url) as response:
+            _gitignore_bytes = response.read()
+            _gitignore_target.write_text(_gitignore_bytes.decode())
 
 
 class Python(Command):
@@ -94,11 +146,15 @@ class Git(Command):
             return "git.exe"
         raise NotImplementedError
 
-    def init(self, proj_path: pathlib.Path) -> None:
+    def init(self, proj_path: pathlib.Path) -> tuple[str, str]:
         """Init repo."""
         command = ["init", proj_path]
         _ = self.execute(command=command)
-
+        _ = self.execute(["-C", proj_path, "add", "README.md"])
+        _ = self.execute(["-C", proj_path, "commit", "-m", '"first init'])
+        _user_name = self.execute(["config", "user.name"])
+        _user_email = self.execute(["config", "user.email"])
+        return _user_name, _user_email
 
 
 class PythonManager(Command, abc.ABC):
@@ -166,11 +222,6 @@ class Py(PythonManager):
 
     def get_version_path(self, version: str) -> str:
         """Get version path."""
-        # versions_output = self.execute(["--list-paths"])
-        # version_path_re = re.search(r"-V:" + re.escape(version) + r"[ *]+(.+exe)", versions_output)
-        # if version_path_re is None:
-        #     raise CommandNotFoundError
-        # return version_path_re.group(1)
         _version_help = self.execute([f"-{version}", "--help"])
         _version_re = re.search(r"usage: (.+exe)", _version_help)
         if _version_re is None:
@@ -180,37 +231,37 @@ class Py(PythonManager):
 
 
 
-# class Uv(PythonManager):
-#
-#     @property
-#     def binary_name(self) -> str:
-#         """Binary name or fully qualified path."""
-#         return "uv"
-#
-#     @property
-#     def versions_command(self) -> list[str]:
-#         """Command and options to get versions."""
-#         return ["python", "list", "--only-installed"]
-#
-#     @property
-#     def versions(self) -> list[str]:
-#         """Available versions."""
-#         if self.binary is None:
-#             return []
-#         versions_output = self.execute(self.versions_command)
-#         uv_python_dir = self.execute(["python", "dir"]).strip()
-#         versions = re.findall(re.escape(uv_python_dir) + r".*(3\.\d+)\.\d", versions_output)
-#         return sorted(
-#             set(versions),
-#             key=lambda v: int(v.split(".")[1]),
-#         )
-#
-#     def get_full_path(self, python_version: str) -> str | None:
-#         """Get full path of specified version, if exists."""
-#         if self.binary is None:
-#             return None
-#         err_msg = "UV not implemented yet."
-#         raise NotImplementedError(err_msg)
+# # class Uv(PythonManager):
+# #
+# #     @property
+# #     def binary_name(self) -> str:
+# #         """Binary name or fully qualified path."""
+# #         return "uv"
+# #
+# #     @property
+# #     def versions_command(self) -> list[str]:
+# #         """Command and options to get versions."""
+# #         return ["python", "list", "--only-installed"]
+# #
+# #     @property
+# #     def versions(self) -> list[str]:
+# #         """Available versions."""
+# #         if self.binary is None:
+# #             return []
+# #         versions_output = self.execute(self.versions_command)
+# #         uv_python_dir = self.execute(["python", "dir"]).strip()
+# #         versions = re.findall(re.escape(uv_python_dir) + r".*(3\.\d+)\.\d", versions_output)
+# #         return sorted(
+# #             set(versions),
+# #             key=lambda v: int(v.split(".")[1]),
+# #         )
+# #
+# #     def get_full_path(self, python_version: str) -> str | None:
+# #         """Get full path of specified version, if exists."""
+# #         if self.binary is None:
+# #             return None
+# #         err_msg = "UV not implemented yet."
+# #         raise NotImplementedError(err_msg)
 
 
 

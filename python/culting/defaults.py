@@ -5,16 +5,9 @@ import sys
 import pydantic
 import tomlkit as toml
 
-from . import (
-    __xdg_config_home__,
-    logger,
-)
-
-
-
-conf_default_path = __xdg_config_home__ / "default.toml"
-conf_custom_path = __xdg_config_home__ / "custom.toml"
-
+from .logger import logger
+from .types import LicenseFile
+from .variables import __xdg_config_home__
 
 
 class SetupConf(pydantic.BaseModel):
@@ -34,6 +27,8 @@ class PackageConf(pydantic.BaseModel):
 
     venv: str = ".venv"
     src: str = "src"
+    readme: str = "README.md"
+    license: LicenseFile = "mit"
 
     @pydantic.field_validator("venv", "src")
     @classmethod
@@ -68,11 +63,11 @@ class CultingConf(pydantic.BaseModel):
     package: PackageConf = PackageConf()
 
 
-
+conf_default_path = __xdg_config_home__ / "config-default.toml"
+conf_custom_path = __xdg_config_home__ / "config-custom.toml"
 
 with conf_default_path.open("w") as file:
     toml.dump(CultingConf().model_dump(), file, sort_keys=True)
-
 
 try:
     if conf_custom_path.is_file():
@@ -82,7 +77,45 @@ try:
     else:
         culting_conf = CultingConf()
 except pydantic.ValidationError as err:
-    logger.exception(err)
+    err_msg = err
+    logger.exception(err_msg)
     sys.exit(1)
+
+
+
+
+pkg_init_py = '''\
+"""Init."""
+
+import importlib.metadata
+
+
+__version__ = importlib.metadata.version(__name__)
+
+__all__ = ["__version__"]
+
+'''
+
+pkg_main_py = '''\
+"""Main."""
+
+def main() -> None:
+    """Run main."""
+    print("Hello, World!")
+
+'''
+
+tst_init_py = '''\
+"""Init tests."""
+# pyright: reportMissingImports=false
+
+import {pkg_name}
+
+
+__all__ = ["{pkg_name}"]
+
+'''
+
+
 
 

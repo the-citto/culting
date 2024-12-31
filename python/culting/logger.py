@@ -9,8 +9,7 @@ import typing as t
 
 import rich_click as click
 
-from ._vars import logfile_path
-
+from .variables import logfile_path
 
 
 FILE_MAX_BITES = 100_000
@@ -68,8 +67,6 @@ class FileFormatter(logging.Formatter):
         message["created"] = dt.datetime.fromtimestamp(record.created, tz=dt.UTC).isoformat()
         if record.relativeCreated is not None:
             message["relativeCreated"] = dt.datetime.fromtimestamp(record.relativeCreated, tz=dt.UTC).isoformat()
-        # if record.exc_info is not None:
-        #     message["exc_info"] = self.formatException(record.exc_info)
         if record.exc_info is not None:
             message["exc_info"] = self.formatException(record.exc_info)
         if record.stack_info is not None:
@@ -116,5 +113,46 @@ logging.config.dictConfig({
 })
 
 logger = logging.getLogger(__name__)
+
+
+# logging.config.dictConfig({
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "stderr": {
+#             "()": ColorFormatter,
+#         },
+#         "file": {
+#             "()": FileFormatter,
+#         },
+#     },
+#     "handlers": {
+#         "stderr": {
+#             "class": "logging.StreamHandler",
+#             "level": "INFO",
+#             "formatter": "stderr",
+#             "stream": "ext://sys.stderr",
+#         },
+#         "file": {
+#             "class": "logging.handlers.RotatingFileHandler",
+#             "level": "DEBUG",
+#             "formatter": "file",
+#             "filename": __xdg_state_home__ / f"{__name__}.log",
+#             "maxBytes": FILE_MAX_BITES,
+#             "backupCount": 3,
+#         },
+#     },
+#     "loggers": {
+#         "root": {
+#             "level": "DEBUG",
+#             "handlers": [
+#                 "stderr",
+#                 "file",
+#             ],
+#         },
+#     },
+# })
+
+
 
 

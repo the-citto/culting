@@ -4,17 +4,29 @@ import pathlib
 import re
 import typing as t
 
-from . import (
-    InitError,
-    InitKwargs,
-    __os__,
-    logger,
-)
+import tomlkit as toml
+
 from .commands import (
     Git,
     Python,
+    Wget,
 )
-
+from .defaults import (
+    pkg_init_py,
+    pkg_main_py,
+    tst_init_py,
+)
+from .exceptions import (
+    InitError,
+)
+from .logger import logger
+from .pyproject import culting_pyproj
+from .types import (
+    InitKwargs,
+)
+from .variables import (
+    __os__,
+)
 
 
 class Init:
@@ -23,44 +35,135 @@ class Init:
     def __init__(self, **kwargs: t.Unpack[InitKwargs]) -> None:
         """Init."""
         self.kwargs = kwargs
-        self._verify_empty()
+        self.proj_path = self._set_proj_path()
         self.name = self._set_name()
-        self.git = Git()
-        self._init_git()
-        self._create_venv()
-        # self._set_package_files()
+        self.readme = self._set_readme()
+        self.user_name, self.user_email = self._init_git()
+        self.license = self._set_license()
+        self.gitignore = self._set_gitignore()
+        self.python = self._set_venv_python()
+        self._set_base_venv()
+        self._set_base_folders()
+        self._set_dunder_files()
+        self.pyproject = self._set_pyproject()
+        self._set_pip_tools()
+        self._set_requirements()
+        self._set_dev()
 
-    def _verify_empty(self) -> None:
-        path = self.kwargs["path"]
-        self.proj_path = pathlib.Path(path).absolute()
-        self.proj_path.mkdir(parents=True, exist_ok=True)
-        if any(self.proj_path.iterdir()):
-            err_msg = f"{self.proj_path} is not empty"
-            raise InitError(err_msg)
-        logger.debug(f"'{self.proj_path}' is empty")
+    def _set_dev(self) -> None:
+        self.python.run([
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            f"{self.proj_path}[dev]",
+            "-c",
+            f"{self.proj_path}/requirements.lock",
+            "--quiet",
+        ])
+
+    def _set_requirements(self) -> None:
+        self.python.run([
+            "-m",
+            "piptools",
+            "compile",
+            "-o",
+            f"{self.proj_path}/requirements.lock",
+            f"{self.proj_path}/pyproject.toml",
+            "--no-strip-extras",
+        ])
+
+    def _set_pip_tools(self) -> None:
+        self.python.execute(["-m", "pip", "install", "pip-tools"])
+
+    def _set_pyproject(self) -> pathlib.Path:
+        _pyproject = culting_pyproj
+        _pyproject.project.name = self.name
+        _pyproject.project.requires_python = f">={self.python.version}"
+        _pyproject.tool.ruff.lint.isort.known_first_party = [self.name]
+        _toml_dump = _pyproject.toml_dump()
+        _toml_dump["tool"]["setuptools"]["package-data"][self.name] = ["py.typed"] # type: ignore [index]
+        _toml_dump["project"]["scripts"][self.name] = f"{self.name}:__main__.main" # type: ignore [index]
+        _pyproject_path = self.proj_path / "pyproject.toml"
+        with _pyproject_path.open("w") as file:
+            toml.dump(_toml_dump, file)
+        logger.debug("pyproject.toml done")
+        return _pyproject_path
+
+    def _set_dunder_files(self) -> None:
+        (self.pkg_path / "__init__.py").write_text(pkg_init_py)
+        (self.pkg_path / "__main__.py").write_text(pkg_main_py)
+        (self.tests / "__init__.py").write_text(tst_init_py.format(pkg_name=self.name))
+        (self.pkg_path / "py.typed").touch()
+
+    def _set_base_folders(self) -> None:
+        _src = self.kwargs["src"]
+        self.scr = self.proj_path / _src
+        self.pkg_path = self.scr / self.name
+        self.pkg_path.mkdir(parents=True)
+        self.tests = self.proj_path / "tests"
+        self.tests.mkdir(parents=True)
+
+    def _set_base_venv(self) -> None:
+        self.python.execute(["-m", "pip", "install", "--upgrade", "pip", "pip-tools"])
+
+    def _init_git(self) -> tuple[str, str]:
+        _git = Git()
+        logger.debug(f"Initializing Git repository in '{self.proj_path}'")
+        return _git.init(proj_path=self.proj_path)
+
+    def _set_gitignore(self) -> pathlib.Path:
+        Wget().gitignore(proj_path=self.proj_path)
+        logger.debug(".gitignore done")
+        return self.proj_path / ".gitignore"
+
+    def _set_license(self) -> pathlib.Path:
+        _license_template = self.kwargs["license_template"]
+        _license_path = self.proj_path / "LICENSE"
+        Wget().license(
+            license_template=_license_template,
+            license_path=_license_path,
+            user_name=self.user_name,
+        )
+        logger.debug(f"{_license_template} LICENSE done")
+        return _license_path
+
+    def _set_readme(self) -> str:
+        _readme = self.kwargs["readme"]
+        _title = self.name.replace("_", " ").strip().capitalize()
+        _readme_path = self.proj_path / _readme
+        _readme_path.write_text(f"# {_title}")
+        logger.debug(f"'{_readme_path}' created")
+        return _readme
 
     def _set_name(self) -> str:
-        name = self.kwargs["name"]
-        if name is None:
-            name = self.proj_path.name
-        valid_name = re.match(r"[a-z_][a-z0-9_]+$", name)
-        if valid_name is None:
-            err_msg = f"Name '{name}' is not PEP 8 / PEP 423 compliant"
+        _name = self.kwargs.get("name")
+        if _name is None:
+            _name = self.proj_path.name
+        _valid_name = re.match(r"[a-z_][a-z0-9_]+$", _name)
+        if _valid_name is None:
+            err_msg = f"Name '{_name}' is not PEP 8 / PEP 423 compliant"
             raise InitError(err_msg)
-        if name.startswith("_"):
-            logger.warning(f"Name '{name}' with leading underscore should be for special use")
-        logger.info(f"Initializing package '{name}'")
-        return name
+        if _name.startswith("_"):
+            logger.warning(f"'{_name}' - names with leading underscore are reserved for special use")
+        logger.info(f"Initializing package '{_name}'")
+        return _name
 
-    def _init_git(self) -> None:
-        logger.info(f"Initializing Git repository in '{self.proj_path}'")
-        self.git.init(proj_path=self.proj_path)
+    def _set_proj_path(self) -> pathlib.Path:
+        _path = self.kwargs["path"]
+        _proj_path = pathlib.Path(_path).absolute()
+        _proj_path.mkdir(parents=True, exist_ok=True)
+        if any(_proj_path.iterdir()):
+            err_msg = f"'{_proj_path}' is not empty"
+            raise InitError(err_msg)
+        logger.debug(f"'{_proj_path}' created")
+        return _proj_path
 
-    def _create_venv(self) -> None:
+    def _set_venv_python(self) -> Python:
         _sys_python = Python(binary_path=self.kwargs.get("python_path"))
-        _venv_name = self.kwargs.get("venv")
+        _venv_name = self.kwargs["venv"]
         _venv_path = self.proj_path / _venv_name
-        logger.info(f"Creating '{_venv_name}'")
+        logger.debug(f"Creating '{_venv_name}'")
         _ = _sys_python.execute(["-m", "venv", _venv_path])
         if __os__ == "linux":
             _venv_python_path = _venv_path / "bin/python"
@@ -68,61 +171,10 @@ class Init:
             _venv_python_path = _venv_path / "Scripts/python.exe"
         else:
             raise InitError
-        self.python = Python(binary_path=str(_venv_python_path))
-        logger.debug(f"venv python: '{self.python.binary}'")
+        _python = Python(binary_path=str(_venv_python_path))
+        logger.debug(f"venv python: '{_python.binary}'")
+        return _python
 
-    # def _set_sys_python(self) -> Python:
-    #     _python_version = self.kwargs.get("python_version")
-    #     for p in culting_conf.python.managers_priority:
-    #         python_manager_mapped = python_managers_map.get(p)
-    #         if python_manager_mapped is None:
-    #             continue
-    #         python_manager = python_manager_mapped()
-    #         python_full_path = python_manager.get_full_path(python_version=_python_version)
-    #         if python_full_path is None:
-    #             continue
-    #         logger.info(p)
-    #         logger.info(python_full_path)
-    #         break
-    #
-    #     # logger.info(_python_version)
-    #     # logger.info(culting_conf.python.managers_priority)
-    #     # pyenv = self.kwargs["pyenv"]
-    #     # if pyenv is not None:
-    #     #     ...
-    #     # py = self.kwargs["py"]
-    #     # if py is not None:
-    #     #     ...
-    #     # uv = self.kwargs["uv"]
-    #     # if uv is not None:
-    #     #     ...
-    #     return Python()
-
-    # def _set_package_files(self) -> None:
-    #     src_pkg_dir = self.proj_path / culting_conf.package.src / self.name
-    #     src_pkg_dir.mkdir(parents=True)
-    #     # pkg_init_txt = (
-    #     #     '"""Init."""\n\n'
-    #     #     "import importlib.metadata\n"
-    #     #     "\n\n\n"
-    #     #     "__version__ = importlib.metadata.version(__name__)\n"
-    #     #     "\n"
-    #     #         "__all__: list[str] = []\n"
-    #     # )
-    #     # pkg_init_path = src_pkg_dir / "__init__.py"
-    #     # with pkg_init_path.open("w") as file:
-    #     #     file.write(pkg_init_txt)
-    #     # pkg_main_txt = (
-    #     #     '"""Main."""\n\n'
-    #     #     "def main() -> None:\n"
-    #     #     '    """Run entry point."""\n\n\n'
-    #     #     'if __name__ == "__main__":\n'
-    #     #     "    main()\n"
-    #     # )
-    #     # pkg_main_path = src_pkg_dir / "__main__.py"
-    #     # with pkg_main_path.open("w") as file:
-    #     #     file.write(pkg_main_txt)
-    #     logger.info(f"Package '{self.name}' initialized in {self.proj_path}")
 
 
 

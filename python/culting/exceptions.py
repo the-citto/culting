@@ -1,7 +1,6 @@
 """Custom exceptions."""
 
 
-
 class CommandNotFoundError(ImportError):
     """Binary not found."""
 
@@ -10,7 +9,6 @@ class InitWarning(Warning):
 
 class InitError(RuntimeError):
     """Init error."""
-
 
 
 

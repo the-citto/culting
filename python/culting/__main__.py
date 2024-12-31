@@ -3,7 +3,6 @@
 from . import cli
 
 
-
 def main() -> None:
     """Run."""
     cli.cli()
