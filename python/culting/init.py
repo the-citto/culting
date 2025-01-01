@@ -41,14 +41,17 @@ class Init:
         self.user_name, self.user_email = self._init_git()
         self.license = self._set_license()
         self.gitignore = self._set_gitignore()
+        self.requirements_in = self._set_requirements_in()
         self.python = self._set_venv_python()
         self._set_base_venv()
-        self._set_base_folders()
+        self.pkg_path, self.tests_path = self._set_base_folders()
+        self._set_py_typed()
         self._set_dunder_files()
         self.pyproject = self._set_pyproject()
         self._set_pip_tools()
         self._set_requirements()
         self._set_dev()
+        logger.info(f"Package '{self.name}' set up 🏗️ happy coding")
 
     def _set_dev(self) -> None:
         self.python.run([
@@ -69,8 +72,9 @@ class Init:
             "compile",
             "-o",
             f"{self.proj_path}/requirements.lock",
-            f"{self.proj_path}/pyproject.toml",
+            f"{self.proj_path}/requirements.in",
             "--no-strip-extras",
+            "--quiet",
         ])
 
     def _set_pip_tools(self) -> None:
@@ -90,19 +94,30 @@ class Init:
         logger.debug("pyproject.toml done")
         return _pyproject_path
 
+    def _set_py_typed(self) -> None:
+        (self.pkg_path / "py.typed").touch()
+        logger.debug("py.typed done")
+
+    def _set_requirements_in(self) -> pathlib.Path:
+        _requirements_in = self.proj_path / "requirements.in"
+        _requirements_in.touch()
+        logger.debug("requirements.in done")
+        return _requirements_in
+
     def _set_dunder_files(self) -> None:
         (self.pkg_path / "__init__.py").write_text(pkg_init_py)
         (self.pkg_path / "__main__.py").write_text(pkg_main_py)
-        (self.tests / "__init__.py").write_text(tst_init_py.format(pkg_name=self.name))
-        (self.pkg_path / "py.typed").touch()
+        (self.tests_path / "__init__.py").write_text(tst_init_py.format(pkg_name=self.name))
 
-    def _set_base_folders(self) -> None:
+    def _set_base_folders(self) -> tuple[pathlib.Path, pathlib.Path]:
         _src = self.kwargs["src"]
         self.scr = self.proj_path / _src
-        self.pkg_path = self.scr / self.name
-        self.pkg_path.mkdir(parents=True)
-        self.tests = self.proj_path / "tests"
-        self.tests.mkdir(parents=True)
+        _pkg_path = self.scr / self.name
+        _pkg_path.mkdir(parents=True)
+        _tests_path = self.proj_path / "tests"
+        _tests_path.mkdir(parents=True)
+        return _pkg_path, _tests_path
+
 
     def _set_base_venv(self) -> None:
         self.python.execute(["-m", "pip", "install", "--upgrade", "pip", "pip-tools"])

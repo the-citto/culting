@@ -54,7 +54,7 @@ class ProjectAuthor(pydantic.BaseModel):
     """Project author."""
 
     name: str | None = "placeholder"
-    email: str | None = "placeholder@abc.com" if culting_conf.git.use_email else None
+    email: str | None = "placeholder@abc.com"
 
 
 class ProjectScripts(pydantic.BaseModel):
@@ -93,7 +93,7 @@ class Project(pydantic.BaseModel):
         alias="gui-scripts",
         default=ProjectScripts(),
     )
-    dependencies: list[str] = []
+    dynamic: list[str] = ["dependencies"]
     optional_dependencies: ProjectOptionalDependencies = pydantic.Field(
         alias="optional-dependencies",
         default=ProjectOptionalDependencies(),
@@ -132,9 +132,16 @@ class ToolSetuptoolsPackageData(pydantic.BaseModel):
     )
 
 
+class ToolSetuptoolsDynamic(pydantic.BaseModel):
+    """Setuptools dynamic."""
+
+    dependencies: dict[str, list[str]] = {"file": ["requirements.lock"]}
+
+
 class ToolSetuptools(pydantic.BaseModel):
     """Setuptools."""
 
+    dynamic: ToolSetuptoolsDynamic = ToolSetuptoolsDynamic()
     package_data: ToolSetuptoolsPackageData = pydantic.Field(
         alias="package-data",
         default=ToolSetuptoolsPackageData(),
@@ -285,7 +292,6 @@ class CultingPyproj(pydantic.BaseModel):
             _tmp.update(a)
             _inline_authors.add_line(_tmp, newline=True)
         _project["authors"] = _inline_authors.multiline(multiline=True)
-        _project["dependencies"].multiline(multiline=True)
         _project_optional_dependencies = _project["optional-dependencies"]
         _project_optional_dependencies["tests"].multiline(multiline=True)
         _project_optional_dependencies["dev"].multiline(multiline=True)

@@ -63,6 +63,12 @@ click.rich_click.OPTION_GROUPS = {
         },
     ],
 
+    "culting run": [
+        {
+            "name": "Advanced Options",
+            "options": ["--debug", "--help"],
+        },
+    ],
 }
 
 
@@ -108,11 +114,7 @@ class MutuallyExclusiveOption(click.Option):
     },
 )
 @click.version_option(__version__, "-V", "--version")
-@click.option(
-    "-d", "--debug",
-    is_flag=True,
-    help="Show debug messages.",
-)
+@click.option("-d", "--debug", is_flag=True, help="Show debug messages.")
 def cli(*, debug: bool) -> None:
     """Culting, a Python projects' manager."""
     if debug:
@@ -229,17 +231,10 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
         ctx.abort()
 
 
-
-# # @cli.command(cls=CommandWarning)
-# @cli.command()
-# def review() -> None:
-#     """Review project settings."""
-#     # from . import SupportedOs
-#     # logger.info(", ".join(f"'{o}'" for o in t.get_args(SupportedOs)))
-#     # logger.info(Python().version)
-#     # logger.info(Pyenv().versions)
-#     # logger.info(Py().versions)
-
+@cli.command()
+def run() -> None:
+    """Run package."""
+    from . import run
 
 
 
