@@ -254,6 +254,10 @@ class Ruff(pydantic.BaseModel):
     lint: RuffLint = RuffLint()
 
 
+class Culting(pydantic.BaseModel):
+    """Culting."""
+
+
 class Tool(pydantic.BaseModel):
     """Tool."""
 
@@ -263,6 +267,7 @@ class Tool(pydantic.BaseModel):
     mypy: Mypy = Mypy()
     pyright: Pyright = Pyright()
     ruff: Ruff = Ruff()
+    culting: Culting = Culting()
 
 
 class CultingPyproj(pydantic.BaseModel):
@@ -302,9 +307,14 @@ class CultingPyproj(pydantic.BaseModel):
         _tool = _doc.get("tool")
         if _tool is None:
             raise KeyError
-        _tool["ruff"]["lint"]["ignore"].multiline(multiline=True)
-        for k in _tool["ruff"]["lint"]["per-file-ignores"]:
-            _tool["ruff"]["lint"]["per-file-ignores"][k].multiline(multiline=True)
+        _ruff_lint_ignore = _tool["ruff"]["lint"]["ignore"]
+        _ruff_lint_ignore.comment("(D203) mutually exclusive with (D211) - (D212) mutually exclusive with (D213)")
+        _ruff_lint_ignore.multiline(multiline=True)
+        _ruff_lint_per_file_ignores = _tool["ruff"]["lint"]["per-file-ignores"]
+        for k in _ruff_lint_per_file_ignores:
+            _ruff_lint_per_file_ignores[k].multiline(multiline=True)
+            if "S101" in _ruff_lint_per_file_ignores[k]:
+                _ruff_lint_per_file_ignores[k].comment("(S101) Use of `assert`")
         _doc.add(toml.nl())
         return _doc
 
