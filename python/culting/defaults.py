@@ -103,6 +103,9 @@ def main() -> None:
     """Run main."""
     print("Hello, World!")
 
+if __name__ == "__main__":
+    main()
+
 '''
 
 tst_init_py = '''\

@@ -51,7 +51,8 @@ class Init:
         self._set_pip_tools()
         self._set_requirements()
         self._set_dev()
-        logger.info(f"Package '{self.name}' set up 🏗️ happy coding")
+        logger.info(f"Package '{self.name}' set up, happy coding!")
+        # logger.info(f"Package '{self.name}' set up 🏗️ happy coding!\n")
 
     def _set_dev(self) -> None:
         self.python.run([

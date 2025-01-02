@@ -62,7 +62,7 @@ class Command(abc.ABC):
             raise subprocess.CalledProcessError(returncode=1, cmd=" ".join(map(str, command)), output=err_msg)
         return stdout.decode("utf-8").rstrip()
 
-    def run(self, command: list[str]) -> None:
+    def run(self, command: t.Sequence[str]) -> None:
         """Run."""
         if self.binary is None:
             raise CommandNotFoundError

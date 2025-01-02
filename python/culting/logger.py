@@ -7,12 +7,20 @@ import logging.config
 import logging.handlers
 import typing as t
 
+import rich
+import rich.panel
 import rich_click as click
 
 from .variables import logfile_path
 
 
 FILE_MAX_BITES = 100_000
+
+# class DummyHandler(logging.Handler):
+#     """Dummy handler."""
+#
+#     def __init__(self, level: int = 0) -> None:
+#         super().__init__(level)
 
 class ColorFormatter(logging.Formatter):
     """
@@ -37,10 +45,28 @@ class ColorFormatter(logging.Formatter):
             err_class = record.exc_info[0]
             if err_class is not None:
                 err_name = click.style(err_class.__name__, fg="red")
-                return f" {err_name}: {msg}"
+                # return f" {err_name}: {msg}"
+                panel = rich.panel.Panel(
+                    msg,
+                    title=err_name,
+                    border_style=self.colors[level]["fg"],
+                    title_align=click.RichHelpConfiguration.align_errors_panel,
+
+                )
+                rich.print(panel)
+                return ""
         if level in self.colors:
-            prefix = click.style(level, **self.colors[level])
-            return f" {prefix}: {msg}"
+            # prefix = click.style(level, **self.colors[level])
+            panel = rich.panel.Panel(
+                msg,
+                title=level,
+                border_style=self.colors[level]["fg"],
+                title_align=click.RichHelpConfiguration.align_errors_panel,
+
+            )
+            rich.print(panel)
+            return ""
+            # return f" {prefix}: {msg}"
         return msg
 
 
@@ -87,10 +113,11 @@ logging.config.dictConfig({
     },
     "handlers": {
         "stderr": {
+            # "()": DummyHandler,
             "class": "logging.StreamHandler",
             "level": "INFO",
             "formatter": "stderr",
-            "stream": "ext://sys.stderr",
+            # "stream": "ext://sys.stderr",
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -114,44 +141,6 @@ logging.config.dictConfig({
 
 logger = logging.getLogger(__name__)
 
-
-# logging.config.dictConfig({
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "formatters": {
-#         "stderr": {
-#             "()": ColorFormatter,
-#         },
-#         "file": {
-#             "()": FileFormatter,
-#         },
-#     },
-#     "handlers": {
-#         "stderr": {
-#             "class": "logging.StreamHandler",
-#             "level": "INFO",
-#             "formatter": "stderr",
-#             "stream": "ext://sys.stderr",
-#         },
-#         "file": {
-#             "class": "logging.handlers.RotatingFileHandler",
-#             "level": "DEBUG",
-#             "formatter": "file",
-#             "filename": __xdg_state_home__ / f"{__name__}.log",
-#             "maxBytes": FILE_MAX_BITES,
-#             "backupCount": 3,
-#         },
-#     },
-#     "loggers": {
-#         "root": {
-#             "level": "DEBUG",
-#             "handlers": [
-#                 "stderr",
-#                 "file",
-#             ],
-#         },
-#     },
-# })
 
 
 

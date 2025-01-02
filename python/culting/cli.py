@@ -17,6 +17,7 @@ from .defaults import culting_conf
 from .exceptions import (
     CommandNotFoundError,
     InitError,
+    RunError,
 )
 from .logger import logger
 from .types import (
@@ -62,8 +63,13 @@ click.rich_click.OPTION_GROUPS = {
             "options": ["--help"],
         },
     ],
-
     "culting run": [
+        {
+            "name": "Advanced Options",
+            "options": ["--debug", "--help"],
+        },
+    ],
+    "culting add": [
         {
             "name": "Advanced Options",
             "options": ["--debug", "--help"],
@@ -121,7 +127,6 @@ def cli(*, debug: bool) -> None:
         stderr_handler = logging.getHandlerByName("stderr")
         if stderr_handler is not None:
             stderr_handler.setLevel(logging.DEBUG)
-            click.echo()
             logger.debug("On.")
 
 
@@ -155,10 +160,8 @@ class _CommandCustomHelp(click.RichCommand):
     @t.override
     def format_help(self, ctx: RichContext, formatter: RichHelpFormatter) -> None:  # type: ignore[override]
         if python_default_ver is None:
-            click.echo()
             logger.warning("No default Python version found")
         elif python_default_ver.endswith("t"):
-            click.echo()
             logger.warning("The default Python version is a free-threading build")
         self.format_usage(ctx, formatter)
         self.format_help_text(ctx, formatter)
@@ -231,11 +234,33 @@ def init(ctx: click.Context, **kwargs: t.Unpack[InitKwargs]) -> None:
         ctx.abort()
 
 
-@cli.command()
-def run() -> None:
+@cli.command(context_settings={"ignore_unknown_options": True})
+@click.argument("package_args", nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
+def run(ctx: click.Context, package_args: tuple[str, ...]) -> None:
     """Run package."""
-    from . import run
+    from .run import Run
+    try:
+        Run(package_args)
+    except RunError as err:
+        logger.error(err)
+        # ctx.abort()
+        # raise click.UsageError(err.__str__()) from err
 
+
+@cli.command(context_settings={"ignore_unknown_options": True})
+@click.argument("libraries", nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
+def add(ctx: click.Context, libraries: tuple[str, ...]) -> None:
+    """Add libraries."""
+    from .add import Add
+    try:
+        Add(libraries)
+    except KeyError as err:
+        err_msg = "No library passed to `Add`"
+        # logger.error("No library passed.")
+        # ctx.abort()
+        raise click.UsageError(err_msg) from err
 
 
 
