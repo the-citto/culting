@@ -2,11 +2,14 @@
 
 from click.testing import CliRunner
 
-from culting.cli import cli
-from culting.variables import __version__
+from culting.cli import (
+    __version__,
+    cli,
+)
 
 
 def test_version() -> None:
+    """Test version."""
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
     expected = f"version {__version__}"

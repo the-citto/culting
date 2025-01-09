@@ -1,5 +1,7 @@
 click
+pj_logging
 pydantic[email]
+rich
 rich-click
 tomlkit
 

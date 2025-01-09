@@ -1,4 +1,0 @@
--c requirements.txt
--r requirements-tests.txt
-ipython
-
