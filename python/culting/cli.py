@@ -1,14 +1,19 @@
 """CLI."""
 
 import importlib.metadata
-import os
+import logging
+import pathlib
+import sys
 import typing as t
 
 import rich_click as click
 from rich_click import RichContext
 from rich_click.rich_help_formatter import RichHelpFormatter
 
-from . import core
+from .platform import (
+    logger,
+    platform_info,
+)
 from .type_defs import InitKwargs
 
 
@@ -80,6 +85,10 @@ class MutuallyExclusiveOption(click.Option):
 
     def __init__(self, *args: t.Any, mutually_exclusive: list[str], **kwargs: t.Any) -> None: # noqa: ANN401
         """Init."""
+        if any(pathlib.Path().iterdir()):
+            err_msg = "The `init` command can be used only in an empty directory."
+            logger.error(err_msg)
+            sys.exit(1)
         self.mutually_exclusive = set(mutually_exclusive)
         _help = kwargs.get("help", "")
         if self.mutually_exclusive:
@@ -113,110 +122,19 @@ class MutuallyExclusiveOption(click.Option):
 class CustomGroup(click.RichGroup):
     """Custom group."""
 
-    # def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-    #     super().__init__(*args, **kwargs)
-    #     print(self.context_class)
-
-    # def __init__(
-    #     self,
-    #     name: t.Optional[str] = None,
-    #     commands: t.Optional[
-    #         t.Union[t.MutableMapping[str, Command], t.Sequence[Command]]
-    #     ] = None,
-    #     **attrs: t.Any,
-    # ) -> None:
-    #     super().__init__(name, **attrs)
-    #
-    #     if commands is None:
-    #         commands = {}
-    #     elif isinstance(commands, abc.Sequence):
-    #         commands = {c.name: c for c in commands if c.name is not None}
-    #
-    #     #: The registered subcommands by their exported names.
-    #     self.commands: t.MutableMapping[str, Command] = commands
-
-
-#     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-#         """Init."""
-# #         self.mutually_exclusive = set(mutually_exclusive)
-# #         _help = kwargs.get("help", "")
-# #         if self.mutually_exclusive:
-# #             _mutually_exclusive = [f"--{e.replace('_', '-')}" for e in self.mutually_exclusive]
-# #             ex_str = ", ".join(_mutually_exclusive)
-# #             kwargs["help"] = _help + (
-# #                 "\b\n\nNOTE: This argument is mutually exclusive with "
-# #                 "arguments: [" + ex_str + "]."
-# #             )
-#         print(kwargs)
-#         # print(kwargs.get("wsl"))
-#         super().__init__(*args, **kwargs)
-
-    # def list_commands(self, ctx: Context) -> t.List[str]:
-    #     return super().list_commands(ctx)
-
-    # def get_command(self, ctx: click.Context, cmd_name: str) -> t.Optional[click.Command]:
-    #     # print(cmd_name)
-    #     print(ctx)
-    #     print(self.context_class)
-    #     # if not ctx.params.get("wsl", False):
-    #     #     return self.commands.get(cmd_name)
-    #     # if cmd_name == "init" and ctx.params.get("wsl", False):
-    #     #     # print("wsl")
-    #     #     _cmd = self.commands.get(cmd_name)
-    #     #     if _cmd is not None:
-    #     #         for param in _cmd.params:
-    #     #             if param.name == "python_version":
-    #     #                 param.default = "foo"
-    #     #                 param.show_default = True
-    #     #                 param.type=click.Choice(["3.11", "3.12"])
-    #     #                 # type=click.Choice(python_choice_vers),
-    #     #                 # show_default="None" if python_default_ver is None else True,
-    #     #                 # default=python_default_ver,
-    #     #                 # print(dir(param))
-    #     # # print(dir(self.commands.get(cmd_name)))
-    #     return self.commands.get(cmd_name)
-
-
-    def invoke(self, ctx: click.Context):
-        print(self.commands)
-    #     print(ctx.params)
-        print(ctx)
-    #     # print(ctx.invoked_subcommand)
-        super().invoke(ctx)
-    # #     print(ctx.invoked_subcommand)
-    # #     print("invoke")
-    #
-    # def add_command(self, cmd: click.Command, name: str | None = None) -> None:
-    #     """Customize add_command."""
-    #     click.Group.add_command(self, cmd, name=name)
-    #     # print(self.ctx)
-    #     self.invoke_without_command = True
-    #     self.context_settings = {
-    #         "help_option_names": ["-h", "--help"],
-    #         "show_default": True,
-    #     }
-    #     # print("add_command")
-    # #     print(self.name)
-    # #     for param in self.params:
-    # #         if param.name == "wsl" and cmd.name == "init":
-    # #             print(param.name)
-    # #             print(self)
-    # #             # print(cmd)
-    # #             # print(cmd.invoke)
-    # #             # # print(dir(param))
-    # #             # print(param.to_info_dict())
-    #             # # print(param.valu)
-    #     # if cmd.name == "init":
-    #     #     print(cmd.name)
-    #     #     print(cmd.params)
-    #
-    #     # name = name or cmd.name
-    #     # if name is None:
-    #     #     err_msg = "Command has no name."
-    #     #     raise TypeError(err_msg)
-    #     # # _check_multicommand(self, name, cmd, register=True)
-    #     # self.commands[name] = cmd
-
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+        """Set options' attributes for the `init` command."""
+        cmd = self.commands.get(cmd_name)
+        if cmd is not None and cmd_name == "init" and any(pathlib.Path().iterdir()):
+            cmd.hidden = True
+            # for param in cmd.params:
+            #     # print(param)
+            #     if param.name == "python_version":
+            #         # print(param.param_type_name)
+            #         param.default = "3.13t"
+            #         param.show_default = True # pyright: ignore[reportAttributeAccessIssue]
+            #         param.type=click.Choice(["3.11", "3.12"])
+        return cmd
 
 
 @click.group(
@@ -229,28 +147,16 @@ class CustomGroup(click.RichGroup):
 )
 @click.version_option(__version__, "-V", "--version")
 @click.option("-d", "--debug", is_flag=True, help="Show debug messages.")
-@click.option(
-    "-w", "--wsl",
-    is_flag=True,
-    hidden=not(core.__os__ == "linux" and "WSL" in os.uname().release),
-    help="Special usage for Windows projects from WSL.")
 @click.pass_context
-def cli(ctx: click.Context, *, debug: bool, wsl: bool) -> None:
+def cli(ctx: click.Context, *, debug: bool) -> None:
     """Culting, a Python projects' manager."""
-    print(ctx.params)
-    if wsl:
-        core.__os__ = "wsl"
-    core_ = core.Core()
-    click.echo(core_.xdg_config_home)
-    click.echo(core_.xdg_state_home)
-    # print(ctx)
+    if debug:
+        for handler in logger.handlers:
+            if handler.get_name() == "panel":
+                handler.setLevel(logging.DEBUG)
+                logger.debug("On.")
     if ctx.invoked_subcommand is None:
         ctx.get_help()
-#     if debug:
-#         stderr_handler = logging.getHandlerByName("stderr")
-#         if stderr_handler is not None:
-#             stderr_handler.setLevel(logging.DEBUG)
-#             logger.debug("On.")
 
 
 
@@ -280,8 +186,7 @@ def cli(ctx: click.Context, *, debug: bool, wsl: bool) -> None:
 
 class _CommandCustomHelp(click.RichCommand):
 
-    # @t.override
-    def format_help(self, ctx: RichContext, formatter: RichHelpFormatter) -> None:  # type: ignore[override]
+    def format_help(self, ctx: RichContext, formatter: RichHelpFormatter) -> None:
         # if python_default_ver is None:
         #     logger.warning("No default Python version found")
         # elif python_default_ver.endswith("t"):
@@ -341,10 +246,10 @@ class _CommandCustomHelp(click.RichCommand):
 @click.pass_context
 def init(
     ctx: click.Context,
-    path: str,
     **kwargs: t.Unpack[InitKwargs],
 ) -> None:
     """Init project."""
+    # click.echo(kwargs)
 #     logger.debug(kwargs)
 #     _python_version = kwargs.get("python_version")
 #     _python_path = kwargs.get("python_path")
