@@ -120,75 +120,63 @@ class PyprojectToml:
         """Return pyproject.toml document."""
         cls.doc = toml.document()
         cls.doc.add(toml.nl())
-        cls._add_build_system()
-        cls._add_project()
-        cls._add_tool()
+        cls.doc["build-system"] = cls._build_system()
+        cls.doc["project"] = cls._project()
+        cls.doc["tool"] = cls._tool()
         return cls.doc
 
     @classmethod
-    def _add_culting(cls, tool: tomlkit.items.Table) -> None:
-        tool_culting = toml.table()
-        tool["culting"] = tool_culting
-
-    @classmethod
-    def _add_package_data(cls, setuptools: tomlkit.items.Table) -> None:
-        package_data = toml.table()
-        package_data["placeholder"] = ["py.typed"]
-        setuptools["package-data"] = package_data
-
-    @classmethod
-    def _add_setuptools(cls, tool: tomlkit.items.Table) -> None:
-        setuptools = toml.table()
-        cls._add_package_data(setuptools)
-        tool["setuptools"] = setuptools
-
-    @classmethod
-    def _add_setuptools_scm(cls, tool: tomlkit.items.Table) -> None:
-        setuptools_scm = toml.table()
-        tool["setuptools_scm"] = setuptools_scm
-
-    @classmethod
-    def _add_tool(cls) -> None:
-        tool = toml.table()
-        cls._add_setuptools_scm(tool)
-        cls._add_setuptools(tool)
-
-        cls._add_culting(tool)
-        cls.doc["tool"] = tool
-
-    @classmethod
-    def _add_build_system(cls) -> None:
+    def _build_system(cls) -> tomlkit.items.Table:
         build_system = toml.table()
         build_system["requires"] = ["setuptools", "setuptools-scm"]
         build_system["build-backend"] = "setuptools.build_meta"
-        cls.doc["build-system"] = build_system
+        return build_system
 
     @classmethod
-    def _add_keywords(cls, project: tomlkit.items.Table) -> None:
-        keywords = toml.array()
-        project["keywords"] = keywords
+    def _project(cls) -> tomlkit.items.Table:
+        project = toml.table()
+        project["name"] = "placeholder"
+        project["description"] = ""
+        project["readme"] = "README.md"
+        project["keywords"] = cls._keywords()
+        project["requires-python"] = ""
+        project["dynamic"] = cls._dynamic()
+        project.add(toml.nl())
+        project["authors"] = cls._authors()
+        project["classifiers"] = cls._classifiers()
+        project["optional-dependencies"] = cls._optional_dependencies()
+        project["urls"] = cls._urls()
+        project["scripts"] = cls._scripts()
+        project["gui-scripts"] = cls._gui_scripts()
+        return project
 
     @classmethod
-    def _add_dynamic(cls, project: tomlkit.items.Table) -> None:
+    def _keywords(cls) -> tomlkit.items.Array:
+        return toml.array()
+
+    @classmethod
+    def _dynamic(cls) -> tomlkit.items.Array:
         dynamic = toml.array()
+        dynamic.multiline(multiline=True)
         dynamic.extend(["version", "dependencies"])
-        project["dynamic"] = dynamic.multiline(multiline=True)
+        return dynamic
 
     @classmethod
-    def _add_authors(cls, project: tomlkit.items.Table) -> None:
+    def _authors(cls) -> tomlkit.items.Array:
         authors = toml.array()
-        cls._add_author(authors)
-        project["authors"] = authors.multiline(multiline=True)
+        authors.multiline(multiline=True)
+        authors.add_line(cls._author(), newline=True)
+        return authors
 
     @classmethod
-    def _add_author(cls, authors: tomlkit.items.Array) -> None:
+    def _author(cls) -> tomlkit.items.InlineTable:
         author = toml.inline_table()
         author["name"] = ""
         author["email"] = ""
-        authors.add_line(author, newline=True)
+        return author
 
     @classmethod
-    def _add_classifiers(cls, project: tomlkit.items.Table) -> None:
+    def _classifiers(cls) -> tomlkit.items.Array:
         classifiers = toml.array()
         classifiers.extend([
             "License :: OSI Approved :: MIT License",
@@ -196,10 +184,17 @@ class PyprojectToml:
             "Programming Language :: Python",
             "Programming Language :: Python :: 3",
         ])
-        project["classifiers"] = classifiers.multiline(multiline=True)
+        return classifiers.multiline(multiline=True)
 
     @classmethod
-    def _add_tests(cls, optional_dependencies: tomlkit.items.Table) -> None:
+    def _optional_dependencies(cls) -> tomlkit.items.Table:
+        optional_dependencies = toml.table()
+        optional_dependencies["tests"] = cls._tests()
+        optional_dependencies["dev"] = cls._dev()
+        return optional_dependencies
+
+    @classmethod
+    def _tests(cls) -> tomlkit.items.Array:
         tests = toml.array()
         tests.extend([
             "coverage",
@@ -209,59 +204,113 @@ class PyprojectToml:
             "pytest-mypy",
             "pytest-pyright",
         ])
-        optional_dependencies["tests"] = tests.multiline(multiline=True)
+        return tests.multiline(multiline=True)
 
     @classmethod
-    def _add_dev(cls, optional_dependencies: tomlkit.items.Table) -> None:
+    def _dev(cls) -> tomlkit.items.Array:
         dev = toml.array()
         dev.extend([
             "culting[tests]",
             "ipython",
         ])
-        optional_dependencies["dev"] = dev.multiline(multiline=True)
+        return dev.multiline(multiline=True)
 
     @classmethod
-    def _add_optional_dependencies(cls, project: tomlkit.items.Table) -> None:
-        optional_dependencies = toml.table()
-        cls._add_tests(optional_dependencies)
-        cls._add_dev(optional_dependencies)
-        project["optional-dependencies"] = optional_dependencies
-
-    @classmethod
-    def _add_urls(cls, project: tomlkit.items.Table) -> None:
+    def _urls(cls) -> tomlkit.items.Table:
         urls = toml.table()
         urls["Homepage"] = ""
         urls["Repository"] = ""
         urls["Documentation"] = ""
-        project["urls"] = urls
+        return urls
 
     @classmethod
-    def _add_scripts(cls, project: tomlkit.items.Table) -> None:
-        scripts = toml.table()
-        project["scripts"] = scripts
+    def _scripts(cls) -> tomlkit.items.Table:
+        return toml.table()
 
     @classmethod
-    def _add_gui_scripts(cls, project: tomlkit.items.Table) -> None:
-        gui_scripts = toml.table()
-        project["gui-scripts"] = gui_scripts
+    def _gui_scripts(cls) -> tomlkit.items.Table:
+        return toml.table()
 
     @classmethod
-    def _add_project(cls) -> None:
-        project = toml.table()
-        project["name"] = "placeholder"
-        project["description"] = ""
-        project["readme"] = "README.md"
-        cls._add_keywords(project)
-        project["requires-python"] = ""
-        cls._add_dynamic(project)
-        project.add(toml.nl())
-        cls._add_authors(project)
-        cls._add_classifiers(project)
-        cls._add_optional_dependencies(project)
-        cls._add_urls(project)
-        cls._add_scripts(project)
-        cls._add_gui_scripts(project)
-        cls.doc["project"] = project
+    def _tool(cls) -> tomlkit.items.Table:
+        tool = toml.table()
+        tool["setuptools_scm"] = cls._setuptools_scm()
+        tool["setuptools"] = cls._setuptools()
+        tool["pytest"] = cls._pytest()
+        tool["coverage"] = cls._coverage()
+        tool["culting"] = cls._culting()
+        return tool
+
+    @classmethod
+    def _setuptools_scm(cls) -> tomlkit.items.Table:
+        return toml.table()
+
+    @classmethod
+    def _setuptools(cls) -> tomlkit.items.Table:
+        setuptools = toml.table()
+        setuptools["package-data"] = cls._setuptools_package_data()
+        setuptools["dynamic"] = cls._setuptools_dynamic()
+        setuptools["packages"] = cls._setuptools_packages()
+        return setuptools
+
+    @classmethod
+    def _setuptools_package_data(cls) -> tomlkit.items.Table:
+        package_data = toml.table()
+        package_data["placeholder"] = ["py.typed"]
+        return package_data
+
+    @classmethod
+    def _setuptools_dynamic(cls) -> tomlkit.items.Table:
+        setuptools_dynamic = toml.table()
+        setuptools_dynamic["dependencies"] = cls._setuptools_dynamic_dependencies()
+        return setuptools_dynamic
+
+    @classmethod
+    def _setuptools_dynamic_dependencies(cls) -> tomlkit.items.InlineTable:
+        dependencies = toml.inline_table()
+        dependencies["file"] = ["requirements.lock"]
+        return dependencies
+
+    @classmethod
+    def _setuptools_packages(cls) -> tomlkit.items.Table:
+        setuptools_packages = toml.table()
+        setuptools_packages["find"] = cls._setuptools_packages_find()
+        return setuptools_packages
+
+    @classmethod
+    def _setuptools_packages_find(cls) -> tomlkit.items.Table:
+        find = toml.table()
+        find["where"] = ["src"]
+        return find
+
+    @classmethod
+    def _pytest(cls) -> tomlkit.items.Table:
+        pytest = toml.table()
+        pytest["ini_options"] = cls._pytest_ini_options()
+        return pytest
+
+    @classmethod
+    def _pytest_ini_options(cls) -> tomlkit.items.Table:
+        ini_options = toml.table()
+        ini_options["addopts"] = "--strict-markers --no-header --tb=no --cov --cov-report term-missing"
+        ini_options["testpaths"] = ["tests"]
+        return ini_options
+
+    @classmethod
+    def _coverage(cls) -> tomlkit.items.Table:
+        coverage = toml.table()
+        coverage["run"] = cls._coverage_run()
+        return coverage
+
+    @classmethod
+    def _coverage_run(cls) -> tomlkit.items.Table:
+        coverage_run = toml.table()
+        coverage_run["omit"] = ["tests/*"]
+        return coverage_run
+
+    @classmethod
+    def _culting(cls) -> tomlkit.items.Table:
+        return toml.table()
 
 
 print(toml.dumps(PyprojectToml()))
@@ -291,19 +340,8 @@ print(platform_info.xdg_config_home())
 
 
 
-# [tool.setuptools.dynamic]
-# dependencies = { file = ["requirements.lock"] }
-#
-# [tool.setuptools.packages.find]
-# where = ["python"]
-#
-# [tool.pytest.ini_options]
-# addopts = "--strict-markers --no-header --tb=no --cov --cov-report term-missing"
-# testpaths = ["tests"]
-#
-# [tool.coverage.run]
-# omit = ["tests/*"]
-#
+
+
 # [tool.mypy]
 # plugins = ['pydantic.mypy']
 # strict = true
