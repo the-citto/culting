@@ -30,27 +30,27 @@ all:
 
 #
 
-requirements/requirements.txt: pyproject.toml requirements/requirements.in $(PIP-COMPILE)
-	$(PYTHON) -m piptools compile -o requirements/requirements.txt requirements/requirements.in
+requirements.txt: pyproject.toml requirements.in $(PIP-COMPILE)
+	$(PYTHON) -m piptools compile -o requirements.txt requirements.in
 
-base: requirements/requirements.txt
-	$(PYTHON) -m piptools sync requirements/requirements.txt
+base: requirements.txt
+	$(PYTHON) -m piptools sync requirements.txt
 
 
-requirements/requirements-tests.txt: requirements/requirements.txt requirements/requirements-tests.in
-	$(PYTHON) -m piptools compile -o requirements/requirements-tests.txt requirements/requirements-tests.in
+requirements-tests.txt: requirements.txt requirements-tests.in
+	$(PYTHON) -m piptools compile -o requirements-tests.txt requirements-tests.in
 
-tests: requirements/requirements.txt
-	$(PYTHON) -m piptools sync requirements/requirements-tests.txt
+tests: requirements.txt
+	$(PYTHON) -m piptools sync requirements-tests.txt
 	$(PYTHON) -m pip install -e .[tests]
 
 
-requirements/requirements-dev.txt: requirements/requirements-tests.txt requirements/requirements-dev.in
-	$(PYTHON) -m piptools compile -o requirements/requirements-dev.txt requirements/requirements-dev.in
+requirements-dev.txt: requirements-tests.txt requirements-dev.in
+	$(PYTHON) -m piptools compile -o requirements-dev.txt requirements-dev.in
 
-dev: requirements/requirements-dev.txt
+dev: requirements-dev.txt
 	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m piptools sync requirements/requirements-dev.txt
+	$(PYTHON) -m piptools sync requirements-dev.txt
 	$(PYTHON) -m pip install -e .[dev]
 
 

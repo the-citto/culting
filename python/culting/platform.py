@@ -1,5 +1,4 @@
-"""
-Core.
+"""Core.
 
 Refs:
     XDG Base Directory Specification: https://specifications.freedesktop.org/basedir-spec/latest/
@@ -21,9 +20,18 @@ SupportedOs = t.Literal["linux", "win32"]
 __os__: SupportedOs = t.cast(SupportedOs, sys.platform)
 
 
+class AuthorInfo(t.TypedDict):
+    """Author info."""
+
+    name: t.NotRequired[str]
+    email: t.NotRequired[str]
+
 
 class Platform(abc.ABC):
-    """Platform."""
+    """Platform.
+
+    Stuff.
+    """
 
     pkg_name: str = "culting"
 
@@ -112,18 +120,29 @@ else:
 logger = platform_info.set_logger()
 
 
-
 class PyprojectToml:
     """Pyproject toml document."""
 
-    def __new__(cls) -> toml.TOMLDocument:
+    def __new__(
+        cls,
+        pkg_name: str = "pkg_name",
+        authors_info: t.Iterable[AuthorInfo] = [AuthorInfo(name="", email="")],
+        os_: SupportedOs = __os__,
+        venv_name: str = ".venv",
+        src_name: str = "src",
+    ) -> toml.TOMLDocument:
         """Return pyproject.toml document."""
-        cls.doc = toml.document()
-        cls.doc.add(toml.nl())
-        cls.doc["build-system"] = cls._build_system()
-        cls.doc["project"] = cls._project()
-        cls.doc["tool"] = cls._tool()
-        return cls.doc
+        cls.os_ = os_
+        cls.authors_info = authors_info
+        cls.pkg_name = pkg_name
+        cls.venv_name = venv_name
+        cls.src_name = src_name
+        doc = toml.document()
+        doc.add(toml.nl())
+        doc["build-system"] = cls._build_system()
+        doc["project"] = cls._project()
+        doc["tool"] = cls._tool()
+        return doc
 
     @classmethod
     def _build_system(cls) -> tomlkit.items.Table:
@@ -135,7 +154,7 @@ class PyprojectToml:
     @classmethod
     def _project(cls) -> tomlkit.items.Table:
         project = toml.table()
-        project["name"] = "placeholder"
+        project["name"] = cls.pkg_name
         project["description"] = ""
         project["readme"] = "README.md"
         project["keywords"] = cls._keywords()
@@ -163,28 +182,32 @@ class PyprojectToml:
 
     @classmethod
     def _authors(cls) -> tomlkit.items.Array:
-        authors = toml.array()
-        authors.multiline(multiline=True)
-        authors.add_line(cls._author(), newline=True)
+        authors = toml.array().multiline(multiline=True)
+        for author_info in cls.authors_info:
+            authors.add_line(cls._author(author_info), newline=True)
         return authors
 
     @classmethod
-    def _author(cls) -> tomlkit.items.InlineTable:
+    def _author(cls, author_info: AuthorInfo) -> tomlkit.items.InlineTable:
         author = toml.inline_table()
-        author["name"] = ""
-        author["email"] = ""
+        name = author_info.get("name")
+        if name is not None:
+            author["name"] = name
+        email = author_info.get("email")
+        if email is not None:
+            author["email"] = email
         return author
 
     @classmethod
     def _classifiers(cls) -> tomlkit.items.Array:
-        classifiers = toml.array()
+        classifiers = toml.array().multiline(multiline=True)
         classifiers.extend([
             "License :: OSI Approved :: MIT License",
             "Typing :: Typed",
             "Programming Language :: Python",
             "Programming Language :: Python :: 3",
         ])
-        return classifiers.multiline(multiline=True)
+        return classifiers
 
     @classmethod
     def _optional_dependencies(cls) -> tomlkit.items.Table:
@@ -195,7 +218,7 @@ class PyprojectToml:
 
     @classmethod
     def _tests(cls) -> tomlkit.items.Array:
-        tests = toml.array()
+        tests = toml.array().multiline(multiline=True)
         tests.extend([
             "coverage",
             "pytest",
@@ -204,16 +227,16 @@ class PyprojectToml:
             "pytest-mypy",
             "pytest-pyright",
         ])
-        return tests.multiline(multiline=True)
+        return tests
 
     @classmethod
     def _dev(cls) -> tomlkit.items.Array:
-        dev = toml.array()
+        dev = toml.array().multiline(multiline=True)
         dev.extend([
             "culting[tests]",
             "ipython",
         ])
-        return dev.multiline(multiline=True)
+        return dev
 
     @classmethod
     def _urls(cls) -> tomlkit.items.Table:
@@ -238,6 +261,9 @@ class PyprojectToml:
         tool["setuptools"] = cls._setuptools()
         tool["pytest"] = cls._pytest()
         tool["coverage"] = cls._coverage()
+        tool["mypy"] = cls._mypy()
+        tool["pyright"] = cls._pyright()
+        tool["ruff"] = cls._ruff()
         tool["culting"] = cls._culting()
         return tool
 
@@ -256,7 +282,7 @@ class PyprojectToml:
     @classmethod
     def _setuptools_package_data(cls) -> tomlkit.items.Table:
         package_data = toml.table()
-        package_data["placeholder"] = ["py.typed"]
+        package_data[cls.pkg_name] = ["py.typed"]
         return package_data
 
     @classmethod
@@ -280,7 +306,7 @@ class PyprojectToml:
     @classmethod
     def _setuptools_packages_find(cls) -> tomlkit.items.Table:
         find = toml.table()
-        find["where"] = ["src"]
+        find["where"] = [cls.src_name]
         return find
 
     @classmethod
@@ -309,91 +335,97 @@ class PyprojectToml:
         return coverage_run
 
     @classmethod
+    def _mypy(cls, os_: SupportedOs = __os__) -> tomlkit.items.Table:
+        mypy = toml.table()
+        mypy["strict"] = "true"
+        if os_ == "linux":
+            mypy["python_executable"] = f"{cls.venv_name}/bin/python"
+        elif os_ == "win32":
+            mypy["python_executable"] = f"{cls.venv_name}/Scripts/python.exe"
+        mypy["exclude"] = cls._exclude()
+        return mypy
+
+    @classmethod
+    def _pyright(cls) -> tomlkit.items.Table:
+        pyright = toml.table()
+        pyright["venvPath"] = "."
+        pyright["venv"] = cls.venv_name
+        pyright["exclude"] = cls._exclude()
+        return pyright
+
+    @classmethod
+    def _ruff(cls) -> tomlkit.items.Table:
+        ruff = toml.table()
+        ruff["line-length"] = 120
+        ruff["indent-width"] = 4
+        ruff["exclude"] = cls._exclude()
+        ruff["lint"] = cls._ruff_lint()
+        return ruff
+
+    @classmethod
+    def _ruff_lint(cls) -> tomlkit.items.Table:
+        lint = toml.table()
+        lint["select"] = cls._ruff_lint_select()
+        lint["ignore"] = cls._ruff_lint_ignore()
+        lint["tests/**/*.py"] = cls._ruff_lint_per_file_ignore()
+        lint["isort"] = cls._ruff_lint_isort()
+        return lint
+
+    @classmethod
+    def _ruff_lint_select(cls) -> tomlkit.items.Array:
+        lint_select = toml.array().multiline(multiline=True)
+        lint_select.extend(["ALL"])
+        return lint_select
+
+    @classmethod
+    def _ruff_lint_ignore(cls) -> tomlkit.items.Array:
+        lint_ignore = toml.array().multiline(multiline=True)
+        lint_ignore.add_line(
+            "D203",
+            comment=(
+                "1 blank line required before class docstring"
+                '\n    # "D211" # No blank lines allowed before class docstring'
+                '\n    # "D212" # Multi-line docstring summary should start at the first line'
+            ),
+        )
+        lint_ignore.add_line(
+            "D213",
+            comment=(
+                "Multi-line docstring summary should start at the second line"
+            ),
+        )
+        return lint_ignore
+
+    @classmethod
+    def _ruff_lint_per_file_ignore(cls) -> tomlkit.items.Array:
+        pattern = toml.array().multiline(multiline=True)
+        pattern.add_line("S101", comment="Use of `assert` detected")
+        return pattern
+
+    @classmethod
+    def _ruff_lint_isort(cls) -> tomlkit.items.Table:
+        ruff_isort = toml.table()
+        ruff_isort["known-first-party"] = [cls.pkg_name]
+        ruff_isort["lines-after-imports"] = 2
+        return ruff_isort
+
+    @classmethod
+    def _exclude(cls) -> tomlkit.items.Array:
+        exclude = toml.array().multiline(multiline=True)
+        exclude.extend([
+            "__pycache__",
+            ".git",
+            cls.venv_name,
+        ])
+        return exclude
+
+    @classmethod
     def _culting(cls) -> tomlkit.items.Table:
         return toml.table()
 
 
-print(toml.dumps(PyprojectToml()))
+print(toml.dumps(PyprojectToml(os_=__os__)))
 print(platform_info.xdg_config_home())
-
-
-# def _pyproject_toml_default() -> None:
-    # doc["tool"] = tool
-    # print(toml.dumps(doc))
-    # print(platform_info.xdg_config_home())
-
-# _pyproject_toml_default()
-
-# def _config_toml_default() -> None:
-#     doc = toml.document()
-#     doc.add(toml.nl())
-#     _python = toml.table()
-#     _python["path"] = ""
-#     doc["python"] = _python
-#
-#     doc.add(toml.nl())
-#     print(platform_info.xdg_config_home())
-#     print(toml.dumps(doc))
-#
-# _config_toml_default()
-
-
-
-
-
-
-# [tool.mypy]
-# plugins = ['pydantic.mypy']
-# strict = true
-# python_executable = ".venv/bin/python"
-# exclude = [
-#     "__pycache__",
-#     ".git",
-#     ".venv",
-# ]
-#
-# [tool.pyright]
-# venvPath = "."
-# venv = ".venv"
-# enableReachabilityAnalysis = false
-# include = [
-#     "python",
-#     "tests",
-# ]
-# exclude = [
-#     "__pycache__",
-#     ".git",
-#     ".venv",
-# ]
-#
-# [tool.ruff]
-# exclude = [
-#     "__pycache__",
-#     ".git",
-#     ".venv",
-# ]
-# line-length = 120
-# indent-width = 4
-#
-# [tool.ruff.lint]
-# select = [
-#     "ALL"
-# ]
-# ignore = [
-#     "D203", # `one-blank-line-before-class`
-#     "D212", # `multi-line-summary-first-line`
-#     "ERA001", # Found commented-out code
-#     "S602", # `subprocess` call with `shell=True` identified, security issue
-#     # "S603", # `subprocess` call: check for execution of untrusted input # false positives
-# ] # (D203) mutually exclusive with (D211) - (D212) mutually exclusive with (D213)
-#
-# [tool.ruff.lint.per-file-ignores]
-# "tests/**/*.py" = [
-#     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
-#     "PLR2004", # Magic value used in comparison
-#     "S101",
-# ] # (S101) Use of `assert`
-#
 # [tool.ruff.lint.isort]
 # known-first-party = ["culting"]
 # lines-after-imports = 2

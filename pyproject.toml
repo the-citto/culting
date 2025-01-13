@@ -104,7 +104,7 @@ select = [
 ]
 ignore = [
     "D203", # `one-blank-line-before-class`
-    "D212", # `multi-line-summary-first-line`
+    "D213", # `multi-line-summary-first-line`
     "ERA001", # Found commented-out code
     "S602", # `subprocess` call with `shell=True` identified, security issue
     # "S603", # `subprocess` call: check for execution of untrusted input # false positives
