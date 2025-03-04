@@ -56,7 +56,7 @@ __all__ = [
 #         if self.os == "win32":
 #             return pathlib.Path.home() / "AppData/Temp" / __name__
 #         raise NotImplementedError
-#
+
 # system_details = SystemDetails(os=t.cast(SupportedOs, sys.platform))
 # # system_details = SystemDetails(__os__=t.cast(SupportedOs, sys.platform))
 # print(system_details.model_dump())
