@@ -1,10 +1,8 @@
 
-.PHONY: base
+.PHONY: sync
 .PHONY: build
 .PHONY: check
-.PHONY: dev
 .PHONY: recipes
-.PHONY: tests
 
 
 
@@ -31,26 +29,15 @@ all:
 #
 
 requirements.txt: pyproject.toml requirements.in $(PIP-COMPILE)
-	$(PYTHON) -m piptools compile -o requirements.txt requirements.in
+	$(PYTHON) -m pip install --upgrade pip -q
+	$(PYTHON) -m piptools compile -o requirements.txt requirements.in --no-strip-extras
 
-base: requirements.txt
+sync: requirements.txt
 	$(PYTHON) -m piptools sync requirements.txt
 
 
-requirements-tests.txt: requirements.txt requirements-tests.in
-	$(PYTHON) -m piptools compile -o requirements-tests.txt requirements-tests.in
 
-tests: requirements.txt
-	$(PYTHON) -m piptools sync requirements-tests.txt
-	$(PYTHON) -m pip install -e .[tests]
-
-
-requirements-dev.txt: requirements-tests.txt requirements-dev.in
-	$(PYTHON) -m piptools compile -o requirements-dev.txt requirements-dev.in
-
-dev: requirements-dev.txt
-	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m piptools sync requirements-dev.txt
+dev: sync
 	$(PYTHON) -m pip install -e .[dev]
 
 
