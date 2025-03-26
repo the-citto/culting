@@ -1,8 +1,6 @@
 """CLI."""
 
-import os
 import pathlib
-import re
 import subprocess
 import typing as t
 
@@ -14,6 +12,7 @@ from rich_click import RichContext
 from rich_click.rich_help_formatter import RichHelpFormatter
 
 from . import (
+    ExecutableNotFoundError,
     __version__,
     click_commands,
     logger,
@@ -21,21 +20,22 @@ from . import (
 )
 
 
-click.rich_click.OPTION_GROUPS = {
-    "culting": [
-        {
-            "name": "Advanced Options",
-            "options": ["--wsl", "--debug", "--help", "--version"],
-        },
-    ],
-}
+# click.rich_click.OPTION_GROUPS = {
+#     "culting": [
+#         {
+#             "name": "Advanced Options",
+#             "options": ["--wsl", "--debug", "--help", "--version"],
+#         },
+#     ],
+# }
 
 click.rich_click.COMMAND_GROUPS = {
     "culting": [
         {
-            "name": "Culting Commands",
+            "name": "Commands",
             "commands": [
                 "new",
+                "dependencies",
             ],
         },
         {
@@ -73,54 +73,62 @@ class _CommandCustomHelp(click.RichCommand):
 @click.pass_context
 def cli(ctx: click.Context) -> None:
     """Culting, a Python projects' manager."""
-    # logger.info(os.environ.get("PY_PYTHON"))
     if ctx.invoked_subcommand is None:
         ctx.get_help()
 
 
 @cli.command()
 @click.argument("project-name", type=str)
-@click.option("-p", "--python-version", prompt=True)
+@click.option(
+    "-p", "--python-version",
+    prompt=True,
+    help="The python version to use for the new project.\b\n\nExample: 3.13",
+)
+@click.option(
+    "-s", "--src",
+    default="src",
+    help="The default `src` could be an issue for multilanguage projects.",
+)
 @click.pass_context
-def new(ctx: click.Context, python_version: str, project_name: str) -> None:
-    """Create new culting project."""
+def new(ctx: click.Context, **kwargs: t.Unpack[click_commands.NewProjectKwargs]) -> None:
+    """Create new culting project.
+
+    PROJECT_NAME must be PEP 8 and PEP 423 compliant.
+    """
     try:
-        click_commands.NewProject(python_version, project_name)
-    except click_commands.NewProjectError as err:
+        click_commands.NewProject(**kwargs)
+        logger.info(f"[green]Success.[/green]\n  Run [white]cd {kwargs.get('project_name')}[/white]\n\nEnjoy coding.")
+    except click_commands.CommandError as err:
         logger.exception(err)
         ctx.abort()
-    # project_dir = project_name.lower()
-    # project_dir_re = re.match(r"[a-z][a-z0-9-_]+$", project_dir)
-    # if project_dir_re is None:
-    #     err_msg = f"Invalid project name: '{project_name}'"
-    #     logger.error(err_msg)
-    #     ctx.abort()
-    # python_version_re = re.match(r"3.[\d]{1,2}t?$", python_version)
-    # if python_version_re is None:
-    #     err_msg = f"Invalid python version: '{python_version}'"
-    #     logger.error(err_msg)
-    #     ctx.abort()
-    # if platform_info.os == "linux":
-    #     pyenv_root = os.environ.get("PYENV_ROOT")
-    #     if pyenv_root is None:
-    #         raise RuntimeError
-    #     pyenv_shim = pathlib.Path(pyenv_root) / f"shims/python{python_version}"
-    #     if not pyenv_shim.exists():
-    #         err_msg = f"Python version not found: '{python_version}'"
-    #         logger.error(err_msg)
-    #         ctx.abort()
-    #     cmd = [pyenv_shim, "-V"]
-    # elif platform_info.os == "win32":
-    #     os.environ["PY_PYTHON"] = python_version
-    #     cmd = [platform_info.python_manager, "-V"]
-    # else:
-    #     raise RuntimeError
-    # _out = subprocess.run(cmd, check=False, capture_output=True, text=True)
-    # if _out.returncode != 0:
-    #     logger.error(_out.stderr.strip())
-    #     ctx.abort()
-    # if _out.returncode == 0:
-    #     pathlib.Path(".python-version").write_text(python_version)
+
+
+# @cli.group(invoke_without_command=True)
+# @click.pass_context
+# def dependencies(ctx: click.Context) -> None:
+#     """Dependencies management."""
+#     if ctx.invoked_subcommand is None:
+#         ctx.get_help()
+
+@cli.group()
+def dependencies() -> None:
+    """Dependencies management."""
+
+
+@dependencies.command(name="list")
+def list_() -> None:
+    """List libraries."""
+    logger.info(click_commands.Dependencies().list_)
+
+
+@dependencies.command(name="add")
+@click.argument("libraries", nargs=-1)
+def add_(libraries: tuple[str, ...]) -> None:
+    """Add libraries."""
+    try:
+        click_commands.Dependencies().add(libraries)
+    except click_commands.CommandError as err:
+        logger.error(err)
 
 
 forwarding_command = cli.command(
@@ -200,10 +208,7 @@ def python(ctx: click.Context, cmd_args: t.Iterable[str]) -> None:
     Ensure to run the `python` executable inside the virtual environment `.venv`.
     """
     _ = cmd_args
-    _forwarding(
-        cmd=[platform_info.venv_python],
-        ctx=ctx,
-    )
+    _forwarding(cmd=[platform_info.venv_python], ctx=ctx)
 
 
 @forwarding_command
@@ -214,13 +219,13 @@ def pip(ctx: click.Context, cmd_args: t.Iterable[str]) -> None:
 
     Ensure to run the `pip` executable inside the virtual environment `.venv`.
     """
-    cmd = [platform_info.venv_python, "-m", "pip", "install", "--upgrade", "pip", "-q"]
-    subprocess.call(cmd)
-    _ = cmd_args
-    _forwarding(
-        cmd=[platform_info.venv_python, "-m", "pip"],
-        ctx=ctx,
-    )
+    try:
+        cmd = [platform_info.venv_python, "-m", "pip", "install", "--upgrade", "pip", "-q"]
+        subprocess.call(cmd)
+        _ = cmd_args
+        _forwarding(cmd=[platform_info.venv_python, "-m", "pip"], ctx=ctx)
+    except ExecutableNotFoundError as err:
+        logger.exception(err)
 
 
 @forwarding_command
@@ -229,10 +234,7 @@ def pip(ctx: click.Context, cmd_args: t.Iterable[str]) -> None:
 def pip_compile(ctx: click.Context, cmd_args: t.Iterable[str]) -> None:
     """Pip-compile."""
     _ = cmd_args
-    _forwarding(
-        cmd=[platform_info.venv_python, "-m", "piptools", "compile"],
-        ctx=ctx,
-    )
+    _forwarding(cmd=[platform_info.venv_python, "-m", "piptools", "compile"], ctx=ctx)
 
 
 @forwarding_command
@@ -241,47 +243,7 @@ def pip_compile(ctx: click.Context, cmd_args: t.Iterable[str]) -> None:
 def pip_sync(ctx: click.Context, cmd_args: t.Iterable[str]) -> None:
     """Pip-sync."""
     _ = cmd_args
-    _forwarding(
-        cmd=[platform_info.venv_python, "-m", "piptools", "sync"],
-        ctx=ctx,
-    )
-
-# @cli.command(context_settings={"ignore_unknown_options": True})
-# @click.argument("cmd_args", nargs=-1, type=click.UNPROCESSED)
-# def pip(cmd_args: t.Iterable[str]) -> None:
-#     """Project's pip."""
-#     cmd = [platform_info.venv_python, "-m", "pip", "install", "--upgrade", "pip", "-q"]
-#     subprocess.call(cmd)
-#     cmd = [
-#         platform_info.venv_python,
-#         "-m", "pip",
-#         *cmd_args,
-#     ]
-#     subprocess.call(cmd)
-#
-#
-# @cli.command(context_settings={"ignore_unknown_options": True})
-# @click.argument("cmd_args", nargs=-1, type=click.UNPROCESSED)
-# def pip_compile(cmd_args: t.Iterable[str]) -> None:
-#     """Pip-compile."""
-#     cmd = [
-#         platform_info.venv_python,
-#         "-m", "piptools", "compile",
-#         *cmd_args,
-#     ]
-#     subprocess.call(cmd)
-#
-#
-# @cli.command(context_settings={"ignore_unknown_options": True})
-# @click.argument("cmd_args", nargs=-1, type=click.UNPROCESSED)
-# def pip_sync(cmd_args: t.Iterable[str]) -> None:
-#     """Pip-sync."""
-#     cmd = [
-#         platform_info.venv_python,
-#         "-m", "piptools", "sync",
-#         *cmd_args,
-#     ]
-#     subprocess.call(cmd)
+    _forwarding(cmd=[platform_info.venv_python, "-m", "piptools", "sync"], ctx=ctx)
 
 
 

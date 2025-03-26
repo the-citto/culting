@@ -43,6 +43,7 @@ os.environ["PYDANTIC_ERRORS_INCLUDE_URL"] = "0"
 os.environ["MYPY_FORCE_COLOR"] = "1"
 os.environ["CLICOLOR_FORCE"] = "1"
 
+
 SupportedOs = t.Literal["linux", "win32"]
 
 class ExecutableNotFoundError(FileNotFoundError):
@@ -54,11 +55,11 @@ class PlatformInfo:
     def __init__(self) -> None:
         """Init."""
         try:
-            self.os = self._os
+            self.os: SupportedOs = self._os
             # self.python_manager = self._python_manager
-            self.git = self._git
+            # self.git = self._git
         except (NotImplementedError, ExecutableNotFoundError) as err:
-            logger.exception(err.__str__())
+            logger.exception(err) # noqa: TRY401
             sys.exit(1)
 
     @property
@@ -130,7 +131,8 @@ class PlatformInfo:
         raise RuntimeError
 
     @property
-    def _git(self) -> pathlib.Path:
+    def git(self) -> pathlib.Path:
+        """Git."""
         if self.os == "linux":
             return self._which_path("git")
         if self.os == "win32":

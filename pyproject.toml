@@ -66,7 +66,6 @@ testpaths = ["tests"]
 omit = ["tests/*"]
 
 [tool.mypy]
-plugins = ['pydantic.mypy']
 strict = true
 python_executable = ".venv/bin/python"
 exclude = [
